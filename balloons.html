@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>حرب البالونات</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Lalezar&family=Cairo:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+/*
+VOICE: chaotic, loud fairground battle; three friends fighting over one phone.
+IDEA: a funfair balloon stall at night — balloons fly through everyone's turf; pop yours, steal theirs, dodge bombs.
+PICTURE: the whole screen is three turf bands with balloons racing across them.
+COLOUR and TYPE: funfair night sky #23124d to #5a1f73, coral / teal / lime turf, gold #ffcf3a; Lalezar shouts, Cairo text.
+LAYOUT: full-bleed three bands (top one turned for the player opposite), timer pill on the seam; setup/results centred.
+*/
+:root{color-scheme:dark;--sky1:#23124d;--sky2:#5a1f73;--ink:#fff6ea;--p0:#ff5a5f;--p1:#1fd1c1;--p2:#c8ff3d;--gold:#ffcf3a}
+*{box-sizing:border-box;min-width:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{margin:0;background:linear-gradient(180deg,var(--sky1),var(--sky2));color:var(--ink);font:16px/1.5 Cairo,system-ui,sans-serif;overflow:hidden;user-select:none;-webkit-user-select:none}
+.screen{position:fixed;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:20px;overflow:auto}
+.screen.on{display:flex}
+h1{font:400 clamp(44px,13vw,74px)/1.05 Lalezar,Cairo,sans-serif;margin:0;text-align:center;text-shadow:0 4px 0 rgba(0,0,0,.25)}
+h1 span{display:block;font:700 .34em Cairo;opacity:.8;margin-top:6px;text-shadow:none}
+.card{width:min(420px,100%);background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:20px;padding:16px;display:grid;gap:10px}
+.row{display:flex;align-items:center;gap:10px}
+.dot{width:24px;height:30px;border-radius:50% 50% 48% 48%;flex:none}
+input{flex:1;font:700 16px Cairo,sans-serif;padding:11px 14px;border-radius:12px;border:2px solid transparent;background:rgba(255,255,255,.1);color:var(--ink);min-height:46px}
+input:focus{outline:none;border-color:var(--gold)}
+.big{min-height:62px;width:min(420px,100%);border:0;border-radius:18px;background:var(--gold);color:#3a1650;font:400 32px Lalezar,Cairo;box-shadow:0 6px 0 #b98a00;cursor:pointer}
+.big:active{transform:translateY(4px);box-shadow:0 2px 0 #b98a00}
+.ghost{min-height:48px;width:min(420px,100%);border-radius:16px;border:2px solid rgba(255,255,255,.3);background:none;color:var(--ink);font:700 17px Cairo}
+button:focus-visible{outline:3px solid #fff;outline-offset:3px}
+.legend{width:min(420px,100%);display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;font-size:14px}
+.legend div{display:flex;align-items:center;gap:8px;background:rgba(0,0,0,.2);border-radius:12px;padding:8px 10px;line-height:1.3}
+.legend svg{width:26px;height:32px;flex:none}
+.note{width:min(420px,100%);margin:0;font-size:15px;opacity:.88;text-align:center}
+/* play */
+#play{padding:0;gap:0}
+#field{position:relative;width:100%;height:100%;overflow:hidden;touch-action:none}
+.band{position:absolute;left:0;right:0;height:33.334%;display:flex;align-items:flex-end;justify-content:space-between;padding:10px 14px;pointer-events:none}
+.band[data-i="0"]{top:0;transform:rotate(180deg)}
+.band[data-i="1"]{top:33.333%}
+.band[data-i="2"]{top:66.666%}
+.band .nm{font:900 16px Cairo;opacity:.85}
+.band .sc{font:400 44px/1 Lalezar,Cairo;transition:transform .15s}
+.band .sc.bump{transform:scale(1.3)}
+.band.hit{animation:hit .35s}
+@keyframes hit{0%{filter:brightness(2.2)}100%{filter:none}}
+#clk{position:absolute;top:33.333%;left:50%;transform:translate(-50%,-50%);z-index:5;background:#23124d;border:3px solid var(--gold);color:var(--gold);border-radius:99px;min-width:66px;padding:0 12px;text-align:center;font:400 28px/1.4 Lalezar,Cairo;pointer-events:none}
+#clk.low{color:#ff5a5f;border-color:#ff5a5f}
+.bl{position:absolute;top:0;width:70px;height:88px;margin-left:-35px;touch-action:none;z-index:3}
+.bl svg{width:100%;height:100%;pointer-events:none;filter:drop-shadow(0 6px 6px rgba(0,0,0,.3))}
+.pop{position:absolute;pointer-events:none;font:400 30px Lalezar,Cairo;animation:pop .7s ease-out forwards;text-shadow:0 3px 0 rgba(0,0,0,.4);margin:-20px 0 0 -40px;width:80px;text-align:center;z-index:4}
+@keyframes pop{to{transform:translateY(-40px) scale(1.4);opacity:0}}
+#count{position:absolute;inset:0;display:grid;place-items:center;font:400 120px Lalezar,Cairo;color:var(--gold);z-index:6;pointer-events:none;text-shadow:0 6px 0 rgba(0,0,0,.3)}
+/* results */
+.podium{display:flex;align-items:flex-end;justify-content:center;gap:10px;width:min(420px,100%);height:210px}
+.podium div{flex:1;border-radius:14px 14px 0 0;display:flex;flex-direction:column;align-items:center;padding-top:8px;color:#23124d;font-weight:900;text-align:center}
+.podium div b{font:400 34px/1 Lalezar,Cairo}
+.podium div small{font-size:13px}
+.rounds{font-size:15px;opacity:.85;margin:0;text-align:center}
+#quit{position:fixed;top:50%;left:8px;transform:translateY(-50%);min-width:44px;min-height:44px;border-radius:50%;border:0;background:rgba(0,0,0,.4);color:#fff;font:700 18px Cairo;z-index:8;display:none}
+@media(prefers-reduced-motion:reduce){.pop,.band.hit{animation:none!important}}
+#setup{padding-top:64px}
+</style>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="balloon" viewBox="0 0 72 90">
+      <path d="M36 66 Q30 78 38 88" stroke="rgba(255,255,255,.6)" stroke-width="1.5" fill="none"/>
+      <ellipse cx="36" cy="32" rx="28" ry="32" fill="currentColor"/>
+      <path d="M31 63 L41 63 L36 69 Z" fill="currentColor"/>
+      <ellipse cx="26" cy="20" rx="7" ry="11" fill="rgba(255,255,255,.4)" transform="rotate(-20 26 20)"/>
+      <ellipse cx="36" cy="32" rx="28" ry="32" fill="none" stroke="rgba(0,0,0,.15)" stroke-width="2"/>
+    </symbol>
+    <symbol id="bomb" viewBox="0 0 72 90">
+      <path d="M44 22 Q52 10 60 8" stroke="#d9b277" stroke-width="4" fill="none"/>
+      <circle cx="60" cy="8" r="6" fill="#ff8a1f"/><circle cx="60" cy="8" r="3" fill="#ffe14d"/>
+      <circle cx="34" cy="50" r="28" fill="#1a1620"/>
+      <ellipse cx="24" cy="40" rx="7" ry="5" fill="rgba(255,255,255,.3)" transform="rotate(-30 24 40)"/>
+      <path d="M22 50 L46 50 M34 38 L34 62" stroke="#ff5a5f" stroke-width="5" stroke-linecap="round" transform="rotate(45 34 50)"/>
+    </symbol>
+  </defs>
+</svg>
+
+<button id="quit" aria-label="رجوع للبداية">✕</button>
+
+<section id="setup" class="screen on">
+  <a href="index.html" style="position:absolute;top:12px;right:12px;z-index:9;display:inline-flex;align-items:center;gap:6px;min-height:40px;padding:0 14px;border-radius:99px;background:rgba(255,255,255,.14);color:inherit;font:700 15px Cairo,sans-serif;text-decoration:none">→ ألعابنا</a>
+  <h1>حرب البالونات<span>ثلاث لاعبين · تلفون واحد بالنص · ٣ جولات</span></h1>
+  <div class="card">
+    <div class="row"><span class="dot" style="background:var(--p0)"></span><input id="n0" maxlength="10" value="لاعب ١" aria-label="اسم اللاعب الأحمر (فوق)"></div>
+    <div class="row"><span class="dot" style="background:var(--p1)"></span><input id="n1" maxlength="10" value="لاعب ٢" aria-label="اسم اللاعب الفيروزي (بالنص)"></div>
+    <div class="row"><span class="dot" style="background:var(--p2)"></span><input id="n2" maxlength="10" value="لاعب ٣" aria-label="اسم اللاعب الأخضر (تحت)"></div>
+  </div>
+  <p class="note">الشاشة مقسومة لـ٣ أراضي، وكل واحد بيفقّع بس بأرضه. البالونات بتطير وبتقطع من أرض لأرض!</p>
+  <div class="legend">
+    <div><svg style="color:var(--p1)"><use href="#balloon"/></svg>بالون لونك: +٢</div>
+    <div><svg style="color:var(--p0)"><use href="#balloon"/></svg>بالون غيرك: سرقة! +١ إلك و−١ لصاحبه</div>
+    <div><svg style="color:var(--gold)"><use href="#balloon"/></svg>الذهبي: +٥ لمين يلحقه</div>
+    <div><svg><use href="#bomb"/></svg>القنبلة: −٣ ولا تلمسها!</div>
+  </div>
+  <button class="big" id="start">يلا حرب!</button>
+</section>
+
+<section id="play" class="screen">
+  <div id="field">
+    <div class="band" data-i="0"></div><div class="band" data-i="1"></div><div class="band" data-i="2"></div>
+    <div id="clk">30</div>
+    <div id="count"></div>
+  </div>
+</section>
+
+<section id="result" class="screen">
+  <h1 id="rTitle"></h1>
+  <p class="rounds" id="rSub"></p>
+  <div class="podium" id="podium"></div>
+  <button class="big" id="next"></button>
+  <button class="ghost" id="home">غيّر الأسماء</button>
+</section>
+
+<script>
+{
+const $=s=>document.querySelector(s);
+const C=['#ff5a5f','#1fd1c1','#c8ff3d'];
+const field=$('#field'),bands=[...document.querySelectorAll('.band')];
+const ROUNDS=3,DUR=30;
+let names=[],score=[0,0,0],wins=[0,0,0],round=0,left=DUR,running=false,spawnT=null,clockT=null,actx=null;
+
+const show=id=>{document.querySelectorAll('.screen').forEach(s=>s.classList.toggle('on',s.id===id));$('#quit').style.display=id==='setup'?'none':'block'};
+function beep(f,d,type,vol){
+  try{if(!actx)return;const o=actx.createOscillator(),g=actx.createGain();
+    o.type=type||'triangle';o.frequency.value=f;g.gain.value=vol||.07;o.connect(g);g.connect(actx.destination);o.start();
+    g.gain.exponentialRampToValueAtTime(.0001,actx.currentTime+d);o.stop(actx.currentTime+d)}catch(e){}
+}
+const buzz=ms=>{try{navigator.vibrate&&navigator.vibrate(ms)}catch(e){}};
+
+function paintBands(){
+  bands.forEach((b,i)=>{
+    b.style.background=`linear-gradient(${i===0?'180deg':'0deg'},${C[i]}55,${C[i]}14)`;
+    b.style.borderTop=i?`3px dashed ${C[i]}88`:'0';
+    b.innerHTML=`<span class="nm" style="color:${C[i]}">${names[i]}</span><span class="sc" style="color:${C[i]}">${score[i]}</span>`;
+  });
+}
+function setScore(i,d){
+  score[i]=Math.max(0,score[i]+d);
+  const s=bands[i].querySelector('.sc');s.textContent=score[i];s.classList.add('bump');setTimeout(()=>s.classList.remove('bump'),150);
+  bands[i].classList.remove('hit');void bands[i].offsetWidth;bands[i].classList.add('hit');
+}
+function floatTxt(x,y,txt,col){
+  const d=document.createElement('div');d.className='pop';d.textContent=txt;d.style.left=x+'px';d.style.top=y+'px';d.style.color=col;
+  field.appendChild(d);setTimeout(()=>d.remove(),700);
+}
+
+function spawn(){
+  if(!running)return;
+  const W=field.clientWidth,H=field.clientHeight,prog=1-left/DUR,r=Math.random();
+  let kind;
+  if(r<.12+prog*.06)kind='bomb';else if(r<.17+prog*.05)kind='gold';else kind=String(Math.floor(Math.random()*3));
+  const el=document.createElement('div');el.className='bl';el.dataset.k=kind;
+  el.style.left=(40+Math.random()*(W-80))+'px';
+  el.innerHTML=kind==='bomb'?'<svg><use href="#bomb"/></svg>':`<svg style="color:${kind==='gold'?'var(--gold)':C[+kind]}"><use href="#balloon"/></svg>`;
+  el.addEventListener('pointerdown',e=>{e.preventDefault();hit(el,e)});
+  field.appendChild(el);
+  const up=Math.random()<.5,y0=up?H:-90,y1=up?-90:H;
+  const dur=(kind==='gold'?1700:3600-prog*1700)*(.85+Math.random()*.3);
+  const drift=(Math.random()-.5)*120;
+  const a=el.animate([{transform:`translate(0,${y0}px)`},{transform:`translate(${drift}px,${y1}px)`}],{duration:dur,easing:'linear'});
+  a.onfinish=()=>el.remove();
+  spawnT=setTimeout(spawn,Math.max(160,480-prog*320)*(.7+Math.random()*.6));
+}
+
+function hit(el,e){
+  if(!running||el.dataset.done)return;
+  el.dataset.done=1;el.remove();
+  const r=field.getBoundingClientRect(),x=e.clientX-r.left,y=e.clientY-r.top;
+  const z=Math.min(2,Math.floor(y/(r.height/3)));
+  const k=el.dataset.k;
+  if(k==='bomb'){setScore(z,-3);floatTxt(x,y,'بووم −٣',C[z]);beep(90,.35,'sawtooth',.12);buzz(200)}
+  else if(k==='gold'){setScore(z,5);floatTxt(x,y,'+٥',C[z]);beep(1320,.12);setTimeout(()=>beep(1760,.15),90)}
+  else if(+k===z){setScore(z,2);floatTxt(x,y,'+٢',C[z]);beep(660+Math.random()*200,.08)}
+  else{setScore(z,1);setScore(+k,-1);floatTxt(x,y,'سرقة!',C[z]);beep(320,.1,'square',.06);setTimeout(()=>beep(480,.1,'square',.06),70)}
+}
+
+function countdown(n){
+  $('#count').textContent=n||'يلا!';beep(n?520:1040,.15,'square',.08);
+  if(n>0)setTimeout(()=>countdown(n-1),700);else setTimeout(()=>{$('#count').textContent='';go()},500);
+}
+function go(){
+  running=true;spawn();
+  clockT=setInterval(()=>{
+    left--;$('#clk').textContent=left;$('#clk').classList.toggle('low',left<=5);
+    if(left<=5&&left>0)beep(900,.06,'square',.05);
+    if(left<=0)endRound();
+  },1000);
+}
+function clearField(){field.querySelectorAll('.bl,.pop').forEach(e=>e.remove())}
+
+function startRound(){
+  round++;score=[0,0,0];left=DUR;clearField();
+  show('play');paintBands();$('#clk').textContent=left;$('#clk').classList.remove('low');
+  setTimeout(()=>countdown(3),200);
+}
+function endRound(){
+  running=false;clearInterval(clockT);clearTimeout(spawnT);clearField();
+  const best=Math.max(...score),top=[0,1,2].filter(i=>score[i]===best);
+  top.forEach(i=>wins[i]++);
+  beep(523,.15);setTimeout(()=>beep(659,.15),150);setTimeout(()=>beep(784,.3),300);
+  const o=[0,1,2].sort((a,b)=>score[b]-score[a]),pos=[o[1],o[0],o[2]],hts=[72,100,50];
+  $('#podium').innerHTML=pos.map((i,k)=>`<div style="background:${C[i]};height:${hts[k]}%"><b>${score[i]}</b>${names[i]}<small>ربح ${wins[i]} ${wins[i]===1?'جولة':'جولات'}</small></div>`).join('');
+  if(round>=ROUNDS){
+    const mw=Math.max(...wins),ch=[0,1,2].filter(i=>wins[i]===mw);
+    $('#rTitle').textContent=ch.length>1?'تعادل! '+ch.map(i=>names[i]).join(' و '):'البطل: '+names[ch[0]];
+    $('#rSub').textContent='خلصت الجولات الثلاث';$('#next').textContent='حرب جديدة';
+  }else{
+    $('#rTitle').textContent=top.length>1?'تعادل بالجولة!':names[top[0]]+' ربح الجولة';
+    $('#rSub').textContent=`الجولة ${round} من ${ROUNDS} · الجاية أسرع!`;$('#next').textContent='الجولة الجاية';
+  }
+  show('result');
+}
+function newGame(){
+  try{actx=actx||new (window.AudioContext||window.webkitAudioContext)();actx.resume&&actx.resume()}catch(e){actx=null}
+  names=[0,1,2].map(i=>($('#n'+i).value.trim()||'لاعب '+(i+1)).replace(/[<>&"]/g,''));
+  wins=[0,0,0];round=0;startRound();
+}
+function stop(){running=false;clearInterval(clockT);clearTimeout(spawnT);clearField();show('setup')}
+
+$('#start').addEventListener('click',newGame);
+$('#next').addEventListener('click',()=>{round>=ROUNDS?newGame():startRound()});
+$('#home').addEventListener('click',stop);
+$('#quit').addEventListener('click',stop);
+}
+</script>
+</body>
+</html>

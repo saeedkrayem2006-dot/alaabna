@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>القنبلة الموقوتة</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Lalezar&family=Cairo:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+/*
+VOICE: tense but silly party game, a cartoon bomb passed between three friends.
+IDEA: hot-potato bomb with a burning fuse — say a word, pass the phone, don't be holding it at the boom.
+PICTURE: a big round cartoon bomb with a sparking fuse, centred, the current player's name above it.
+COLOUR and TYPE: warm red night #2a0d12 ground, charcoal bomb, flame orange #ff7a1a, cream text; Lalezar shouts, Cairo text.
+LAYOUT: one column: player name, bomb, the challenge card, one giant pass button at the thumb.
+*/
+:root{color-scheme:dark;--bg:#2a0d12;--bg2:#4a1219;--ink:#fff3e6;--fire:#ff7a1a;--hot:#ffd23f;--p0:#ff5a5f;--p1:#18c4b4;--p2:#ffc23d}
+*{box-sizing:border-box;min-width:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{margin:0;background:radial-gradient(circle at 50% 35%,var(--bg2),var(--bg) 70%);color:var(--ink);font:16px/1.5 Cairo,system-ui,sans-serif;overflow:hidden;user-select:none;-webkit-user-select:none}
+.screen{position:fixed;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:20px;overflow:auto}
+.screen.on{display:flex}
+h1{font:400 clamp(42px,12vw,68px)/1.05 Lalezar,Cairo,sans-serif;margin:0;text-align:center}
+h1 span{display:block;font:700 .36em Cairo;opacity:.75;margin-top:6px}
+.card{width:min(420px,100%);background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.14);border-radius:20px;padding:16px;display:grid;gap:10px}
+.row{display:flex;align-items:center;gap:10px}
+.dot{width:22px;height:22px;border-radius:50%;flex:none}
+input{flex:1;font:700 16px Cairo,sans-serif;padding:11px 14px;border-radius:12px;border:2px solid transparent;background:rgba(255,255,255,.1);color:var(--ink);min-height:46px}
+input:focus{outline:none;border-color:var(--hot)}
+.big{min-height:62px;width:min(420px,100%);border:0;border-radius:18px;background:var(--fire);color:#2a0d12;font:400 30px Lalezar,Cairo;box-shadow:0 6px 0 #b34a00;cursor:pointer}
+.big:active{transform:translateY(4px);box-shadow:0 2px 0 #b34a00}
+.ghost{min-height:48px;width:min(420px,100%);border-radius:16px;border:2px solid rgba(255,255,255,.3);background:none;color:var(--ink);font:700 17px Cairo}
+button:focus-visible{outline:3px solid #fff;outline-offset:3px}
+.rules{width:min(420px,100%);font-size:15px;opacity:.88;margin:0;padding-inline-start:20px}
+.rules li{margin:3px 0}
+/* bomb */
+.bomb{width:min(62vw,250px);aspect-ratio:1;flex:none}
+.bomb.tick{animation:tick var(--spd,1s) ease-in-out infinite}
+@keyframes tick{50%{transform:scale(1.06) rotate(-2deg)}}
+.spark{transform-origin:178px 34px;animation:sp .18s linear infinite alternate}
+@keyframes sp{to{transform:scale(1.35) rotate(25deg)}}
+/* game */
+#who{font:400 clamp(34px,10vw,52px)/1.05 Lalezar,Cairo;margin:0;text-align:center}
+.lab{font-size:15px;opacity:.8;margin:0}
+.task{width:min(420px,100%);background:var(--ink);color:#2a0d12;border-radius:20px;padding:14px 18px;text-align:center;box-shadow:0 8px 0 rgba(0,0,0,.25)}
+.task small{display:block;font-weight:700;opacity:.7}
+.task b{display:block;font:400 clamp(26px,8vw,36px)/1.15 Lalezar,Cairo}
+.task b em{font-style:normal;color:#d1360f}
+.strikes{display:flex;gap:16px;justify-content:center;flex-wrap:wrap}
+.strikes div{display:flex;align-items:center;gap:6px;font-weight:700;font-size:14px;padding:4px 10px;border-radius:99px;background:rgba(255,255,255,.07)}
+.strikes div.cur{outline:2px solid var(--hot)}
+.strikes i{width:11px;height:11px;border-radius:50%;background:rgba(255,255,255,.2)}
+.strikes i.x{background:var(--fire);box-shadow:0 0 6px var(--fire)}
+#pass{min-height:88px;font-size:36px}
+/* boom */
+#boom{background:radial-gradient(circle,#fff6b0 0%,var(--hot) 25%,var(--fire) 55%,#8a1a0c 100%)}
+#boom h1{color:#2a0d12;font-size:clamp(64px,22vw,120px)}
+#boom p{margin:0;color:#2a0d12;font:900 22px Cairo;text-align:center}
+#boom.on{animation:shake .5s}
+@keyframes shake{20%{translate:-14px 6px}40%{translate:12px -8px}60%{translate:-8px 4px}80%{translate:6px -3px}}
+#boom .ghost{border-color:#2a0d12;color:#2a0d12}
+#boom .big{background:#2a0d12;color:var(--hot);box-shadow:0 6px 0 #000}
+#final{display:grid;gap:8px;width:min(360px,100%)}
+#final div{display:flex;justify-content:space-between;padding:10px 16px;border-radius:12px;background:rgba(255,255,255,.08);font-weight:700}
+#quit{position:fixed;top:12px;left:12px;min-width:44px;min-height:44px;border-radius:50%;border:0;background:rgba(0,0,0,.35);color:#fff;font:700 18px Cairo;z-index:5}
+@media(prefers-reduced-motion:reduce){*{animation:none!important}}
+#setup{padding-top:64px}
+</style>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <radialGradient id="shine" cx="35%" cy="35%" r="70%"><stop offset="0" stop-color="#5a5560"/><stop offset=".5" stop-color="#2b2830"/><stop offset="1" stop-color="#121014"/></radialGradient>
+    <symbol id="bombpic" viewBox="0 0 220 220">
+      <ellipse cx="105" cy="205" rx="70" ry="10" fill="rgba(0,0,0,.35)"/>
+      <path d="M140 52 Q160 40 178 34" stroke="#c9a46a" stroke-width="7" fill="none" stroke-linecap="round"/>
+      <rect x="118" y="44" width="34" height="26" rx="6" transform="rotate(35 135 57)" fill="#3a363f"/>
+      <circle cx="105" cy="125" r="78" fill="url(#shine)"/>
+      <ellipse cx="78" cy="92" rx="20" ry="12" fill="rgba(255,255,255,.25)" transform="rotate(-30 78 92)"/>
+      <circle cx="82" cy="128" r="9" fill="#fff3e6"/><circle cx="126" cy="128" r="9" fill="#fff3e6"/>
+      <circle cx="84" cy="130" r="4.5" fill="#121014"/><circle cx="124" cy="130" r="4.5" fill="#121014"/>
+      <path d="M88 158 Q104 148 120 158" stroke="#fff3e6" stroke-width="5" fill="none" stroke-linecap="round"/>
+    </symbol>
+  </defs>
+</svg>
+
+<section id="setup" class="screen on">
+  <a href="index.html" style="position:absolute;top:12px;right:12px;z-index:9;display:inline-flex;align-items:center;gap:6px;min-height:40px;padding:0 14px;border-radius:99px;background:rgba(255,255,255,.14);color:inherit;font:700 15px Cairo,sans-serif;text-decoration:none">→ ألعابنا</a>
+  <svg class="bomb tick" style="--spd:1.2s" aria-hidden="true"><use href="#bombpic"/><g class="spark"><circle cx="178" cy="34" r="12" fill="#ff7a1a"/><circle cx="178" cy="34" r="6" fill="#ffd23f"/></g></svg>
+  <h1>القنبلة الموقوتة<span>ثلاث لاعبين · تلفون واحد · قول ومرّر</span></h1>
+  <div class="card">
+    <div class="row"><span class="dot" style="background:var(--p0)"></span><input id="n0" maxlength="12" value="لاعب ١" aria-label="اسم اللاعب الأول"></div>
+    <div class="row"><span class="dot" style="background:var(--p1)"></span><input id="n1" maxlength="12" value="لاعب ٢" aria-label="اسم اللاعب الثاني"></div>
+    <div class="row"><span class="dot" style="background:var(--p2)"></span><input id="n2" maxlength="12" value="لاعب ٣" aria-label="اسم اللاعب الثالث"></div>
+  </div>
+  <button class="big" id="start">ولّعها!</button>
+  <ul class="rules">
+    <li>بيطلعلكم سؤال، مثلاً: «حيوان بيبلش بحرف ب».</li>
+    <li>اللي التلفون معه بيقول جواب صح، بيكبس «مرّر» وبيعطي التلفون للي بعده.</li>
+    <li>القنبلة بتنفجر بوقت ما حدا بيعرفه. اللي بتنفجر معه بياخد إكس، واللي بيجمع ٣ إكسات بيخسر.</li>
+  </ul>
+</section>
+
+<section id="game" class="screen">
+  <button id="quit" aria-label="رجوع">✕</button>
+  <p class="lab">القنبلة مع:</p>
+  <h2 id="who"></h2>
+  <svg class="bomb tick" id="gbomb" aria-hidden="true"><use href="#bombpic"/><g class="spark"><circle cx="178" cy="34" r="12" fill="#ff7a1a"/><circle cx="178" cy="34" r="6" fill="#ffd23f"/></g></svg>
+  <div class="task"><small>قول</small><b id="task"></b></div>
+  <button class="big" id="pass">قلت! مرّر ←</button>
+  <div class="strikes" id="strikes"></div>
+</section>
+
+<section id="boom" class="screen">
+  <h1>بووووم!</h1>
+  <p id="boomtxt"></p>
+  <div class="strikes" id="strikes2"></div>
+  <button class="big" id="next">الجولة الجاية</button>
+</section>
+
+<section id="end" class="screen">
+  <svg class="bomb" aria-hidden="true"><use href="#bombpic"/></svg>
+  <h1 id="loser"></h1>
+  <p style="margin:0;font-size:18px;opacity:.85">انفجرت معه ٣ مرات… هو اللي بيعزم عالعشا!</p>
+  <div id="final"></div>
+  <button class="big" id="again">لعبة جديدة</button>
+  <button class="ghost" id="home">غيّر الأسماء</button>
+</section>
+
+<script>
+{
+const $=s=>document.querySelector(s);
+const cats=['حيوان','أكلة','بلد','مدينة','اسم ولد','اسم بنت','فاكهة أو خضرة','اشي بالبيت','مهنة','لون أو ماركة','اشي بالمدرسة','رياضة أو لعبة'];
+const letters=['أ','ب','ت','ج','ح','خ','د','ر','ز','س','ش','ص','ع','ف','ق','ك','ل','م','ن','ه','و','ي'];
+const extra=['اشي لونه أحمر','اشي بيطير','اشي بتلاقيه بالمطبخ','اشي بالبحر','اشي أكبر من السيارة','اشي بتلبسه','حيوان بيعيش بالمزرعة','اشي بالعرس'];
+const cols=['#ff5a5f','#18c4b4','#ffc23d'];
+let names=[],x=[0,0,0],cur=0,first=0,timer=null,tickT=null,endAt=0,startAt=0,actx=null,live=false;
+
+const show=id=>document.querySelectorAll('.screen').forEach(s=>s.classList.toggle('on',s.id===id));
+const rnd=a=>a[Math.floor(Math.random()*a.length)];
+
+function beep(f,d,type,vol){
+  try{
+    if(!actx)return;
+    const o=actx.createOscillator(),g=actx.createGain();
+    o.type=type||'square';o.frequency.value=f;g.gain.value=vol||.06;
+    o.connect(g);g.connect(actx.destination);o.start();
+    g.gain.exponentialRampToValueAtTime(.0001,actx.currentTime+d);o.stop(actx.currentTime+d);
+  }catch(e){}
+}
+function boomSound(){
+  try{
+    if(!actx)return;
+    const len=actx.sampleRate*.8,buf=actx.createBuffer(1,len,actx.sampleRate),d=buf.getChannelData(0);
+    for(let i=0;i<len;i++)d[i]=(Math.random()*2-1)*Math.pow(1-i/len,2);
+    const s=actx.createBufferSource(),g=actx.createGain();g.gain.value=.5;
+    s.buffer=buf;s.connect(g);g.connect(actx.destination);s.start();
+  }catch(e){}
+  try{navigator.vibrate&&navigator.vibrate([300,80,300])}catch(e){}
+}
+
+function strikes(el){
+  el.innerHTML=[0,1,2].map(i=>`<div class="${i===cur&&live?'cur':''}" style="color:${cols[i]}">${names[i]} ${[0,1,2].map(k=>`<i class="${k<x[i]?'x':''}"></i>`).join('')}</div>`).join('');
+}
+
+function newTask(){
+  if(Math.random()<.25)$('#task').textContent=rnd(extra);
+  else $('#task').innerHTML=`${rnd(cats)} بحرف <em>${rnd(letters)}</em>`;
+}
+
+function render(){
+  $('#who').textContent=names[cur];
+  $('#who').style.color=cols[cur];
+  strikes($('#strikes'));
+}
+
+function tick(){
+  if(!live)return;
+  const left=endAt-Date.now(),frac=Math.max(0,left/(endAt-startAt));
+  const gap=Math.max(140,180+frac*700);
+  $('#gbomb').style.setProperty('--spd',(gap*2/1000)+'s');
+  beep(frac<.25?1100:800,.05,'square',.05);
+  tickT=setTimeout(tick,gap);
+}
+
+function round(){
+  live=true;cur=first;
+  newTask();render();show('game');
+  startAt=Date.now();endAt=startAt+12000+Math.random()*25000;
+  clearTimeout(timer);clearTimeout(tickT);
+  timer=setTimeout(explode,endAt-startAt);
+  tick();
+}
+
+function pass(){
+  if(!live)return;
+  cur=(cur+1)%3;
+  beep(500,.08,'triangle',.08);
+  render();
+}
+
+function explode(){
+  live=false;clearTimeout(tickT);
+  x[cur]++;boomSound();
+  first=cur;
+  if(x[cur]>=3){
+    $('#boomtxt').textContent=`انفجرت مع ${names[cur]}!`;
+    strikes($('#strikes2'));
+    $('#next').textContent='شوف النتيجة';
+  }else{
+    $('#boomtxt').textContent=`انفجرت مع ${names[cur]} — أخد إكس! هو بيبلش الجولة الجاية.`;
+    strikes($('#strikes2'));
+    $('#next').textContent='الجولة الجاية';
+  }
+  show('boom');
+}
+
+function next(){
+  const lost=x.findIndex(v=>v>=3);
+  if(lost>-1){
+    $('#loser').textContent='خسر '+names[lost];
+    $('#loser').style.color=cols[lost];
+    $('#final').innerHTML=[0,1,2].sort((a,b)=>x[a]-x[b])
+      .map((i,r)=>`<div><span>${r+1}. ${names[i]}</span><span>${x[i]} إكس</span></div>`).join('');
+    show('end');
+  }else round();
+}
+
+function start(){
+  try{actx=actx||new (window.AudioContext||window.webkitAudioContext)();actx.resume&&actx.resume()}catch(e){actx=null}
+  names=[0,1,2].map(i=>($('#n'+i).value.trim()||'لاعب '+(i+1)).replace(/[<>&"]/g,''));
+  x=[0,0,0];first=Math.floor(Math.random()*3);
+  round();
+}
+function stop(){live=false;clearTimeout(timer);clearTimeout(tickT);show('setup')}
+
+$('#start').addEventListener('click',start);
+$('#pass').addEventListener('click',pass);
+$('#next').addEventListener('click',next);
+$('#again').addEventListener('click',start);
+$('#home').addEventListener('click',stop);
+$('#quit').addEventListener('click',stop);
+}
+</script>
+</body>
+</html>

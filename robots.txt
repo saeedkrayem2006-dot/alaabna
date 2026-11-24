@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://saeedkrayem2006-dot.github.io/alaabna/sitemap.xml

@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>ارسم وخمّن</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Lalezar&family=Cairo:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+/*
+VOICE: giggly sketchbook night — bad drawings, loud guesses.
+IDEA: a spiral sketchbook page with crayons lined up under it.
+PICTURE: the white drawing page itself, big, with a crayon tray below.
+COLOUR and TYPE: kraft cardboard #c99a62 desk, white page, crayon colours; Lalezar headings, Cairo text.
+LAYOUT: top strip (drawer + timer), the page, crayon tray, "someone guessed" button.
+*/
+:root{color-scheme:light;--desk:#c99a62;--desk2:#b8874f;--ink:#2a1b0c;--paper:#fffdf6;--go:#2fbf6a;--warn:#e8463a}
+*{box-sizing:border-box;min-width:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{margin:0;background:radial-gradient(circle at 30% 20%,var(--desk),var(--desk2));color:var(--ink);font:16px/1.5 Cairo,system-ui,sans-serif;overflow:hidden;user-select:none;-webkit-user-select:none}
+.screen{position:fixed;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:16px;overflow:auto}
+.screen.on{display:flex}
+#setup{padding-top:64px}
+.home{position:absolute;top:12px;right:12px;display:inline-flex;align-items:center;min-height:40px;padding:0 14px;border-radius:99px;background:rgba(255,255,255,.8);color:var(--ink);font:700 15px Cairo;text-decoration:none}
+.panel{width:min(440px,100%);background:var(--paper);border-radius:8px 24px 24px 8px;padding:20px 22px 20px 20px;display:grid;gap:12px;box-shadow:0 12px 0 rgba(0,0,0,.15);border-right:14px dotted #9aa}
+h1{font:400 clamp(42px,12vw,64px)/1.05 Lalezar,Cairo;margin:0;text-align:center}
+h2{font:400 28px/1.15 Lalezar,Cairo;margin:0;text-align:center}
+.players{display:flex;flex-wrap:wrap;gap:8px}
+.chip{display:flex;align-items:center;gap:4px;background:#f1e6d3;border-radius:99px;padding:4px 6px 4px 14px;font-weight:700}
+.chip button{width:30px;height:30px;border-radius:50%;border:0;background:#dccab0;font:700 14px Cairo;color:var(--ink)}
+.add{display:flex;gap:8px}
+input{flex:1;font:700 16px Cairo;padding:10px 14px;border-radius:12px;border:2px solid #e0d4bd;background:#fff;color:var(--ink);min-height:46px}
+input:focus{outline:none;border-color:var(--ink)}
+.add button{min-width:64px;border:0;border-radius:12px;background:var(--ink);color:#fff;font:900 16px Cairo}
+.seg{display:flex;gap:8px}.seg button{flex:1;min-height:44px;border-radius:12px;border:2px solid #e0d4bd;background:#fff;font:700 15px Cairo;color:var(--ink)}
+.seg button.sel{background:var(--ink);color:#fff;border-color:var(--ink)}
+.lab{margin:0;font-size:14px;opacity:.75}
+.big{min-height:58px;width:100%;border:0;border-radius:16px;background:var(--go);color:#fff;font:400 28px Lalezar,Cairo;box-shadow:0 5px 0 #1d8a49;cursor:pointer}
+.big:active{transform:translateY(3px);box-shadow:0 2px 0 #1d8a49}
+.big:disabled{opacity:.4}
+.ghost{min-height:46px;width:100%;border-radius:14px;border:2px solid var(--ink);background:none;color:var(--ink);font:700 16px Cairo}
+button:focus-visible,a:focus-visible{outline:3px solid #000;outline-offset:3px}
+.secret{font:400 clamp(40px,12vw,60px)/1.1 Lalezar,Cairo;text-align:center;color:var(--warn);min-height:66px}
+/* draw */
+#play{justify-content:flex-start;gap:8px;padding-top:max(10px,env(safe-area-inset-top))}
+.top{display:flex;align-items:center;justify-content:space-between;width:min(560px,100%);gap:8px}
+.top .who{font:900 16px Cairo;background:var(--paper);border-radius:99px;padding:4px 14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.top .t{font:400 34px/1 Lalezar,Cairo;color:#fff;text-shadow:0 2px 0 rgba(0,0,0,.25);font-variant-numeric:tabular-nums;min-width:56px;text-align:center}
+.top .t.low{color:var(--warn);text-shadow:0 0 0 #fff;background:#fff;border-radius:12px}
+.top button{min-width:44px;min-height:40px;border:0;border-radius:12px;background:rgba(255,255,255,.85);font:700 14px Cairo;color:var(--ink);padding:0 10px}
+.page{position:relative;width:min(560px,100%);flex:1;min-height:240px;background:var(--paper);border-radius:10px;box-shadow:0 10px 0 rgba(0,0,0,.15);overflow:hidden;touch-action:none}
+.page canvas{position:absolute;inset:0;width:100%;height:100%;touch-action:none}
+.tray{display:flex;gap:8px;align-items:center;justify-content:center;flex-wrap:wrap;width:min(560px,100%)}
+.tray button{width:40px;height:40px;border-radius:50%;border:3px solid rgba(255,255,255,.7)}
+.tray button.sel{border-color:#000;transform:scale(1.15)}
+.tray .tool{width:auto;border-radius:12px;padding:0 10px;background:var(--paper);font:700 14px Cairo;color:var(--ink);border:2px solid transparent}
+.tray .tool.sel{border-color:#000}
+.guess{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px;width:min(560px,100%);padding-bottom:max(6px,env(safe-area-inset-bottom))}
+.guess button{min-height:52px;border:0;border-radius:14px;background:var(--go);color:#fff;font:900 16px Cairo;box-shadow:0 4px 0 #1d8a49}
+.guess button.none{background:#8a6a45;box-shadow:0 4px 0 #5b4428}
+.board{display:grid;gap:6px}
+.board div{display:flex;justify-content:space-between;padding:8px 12px;border-radius:10px;background:#f4ead8;font-weight:700}
+#quit{position:fixed;bottom:12px;left:12px;width:44px;height:44px;border-radius:50%;border:0;background:rgba(0,0,0,.35);color:#fff;font:700 18px Cairo;display:none;z-index:9}
+</style>
+</head>
+<body>
+<button id="quit" aria-label="رجوع">✕</button>
+
+<section id="setup" class="screen on">
+  <a class="home" href="index.html">→ ألعابنا</a>
+  <div class="panel">
+    <h1>ارسم وخمّن</h1>
+    <p class="lab">اللاعبين (٢ أو أكثر)</p>
+    <div class="players" id="plist"></div>
+    <form class="add" id="addF"><input id="nn" maxlength="12" placeholder="اسم لاعب" aria-label="اسم لاعب"><button>زيد</button></form>
+    <p class="lab">وقت الرسمة</p>
+    <div class="seg" id="secs"><button data-v="45">٤٥ ث</button><button data-v="60" class="sel">٦٠ ث</button><button data-v="90">٩٠ ث</button></div>
+    <button class="big" id="start">ابدأوا</button>
+    <p class="lab">كل دور واحد بيرسم كلمة سرّية والباقيين بيخمّنوا بصوت عالي. اللي بيخمّن صح بياخد نقطتين، والرسّام بياخد نقطة.</p>
+  </div>
+</section>
+
+<section id="turn" class="screen">
+  <div class="panel">
+    <h2 id="tName"></h2>
+    <p class="lab" style="text-align:center">خلّي الكل يغمّض أو يدير وجهه، وبعدين اكبس عشان تشوف الكلمة.</p>
+    <div class="secret" id="secret"></div>
+    <button class="big" id="see">ورّيني الكلمة</button>
+    <button class="ghost" id="skip">كلمة ثانية</button>
+  </div>
+</section>
+
+<section id="play" class="screen">
+  <div class="top"><span class="who" id="who"></span><span class="t" id="clk">60</span><button id="peek">الكلمة</button></div>
+  <div class="page" id="page"><canvas id="cv"></canvas></div>
+  <div class="tray" id="tray"></div>
+  <div class="guess" id="guess"></div>
+</section>
+
+<section id="res" class="screen">
+  <div class="panel">
+    <h2 id="rT"></h2>
+    <p class="lab" style="text-align:center" id="rS"></p>
+    <div class="board" id="board"></div>
+    <button class="big" id="next">الدور الجاي</button>
+    <button class="ghost" id="back">إنهاء اللعبة</button>
+  </div>
+</section>
+
+<script>
+{
+const $=s=>document.querySelector(s);
+const WORDS='شمس قمر بيت شجرة سيارة طيارة سفينة قطة كلب سمكة فيل زرافة أسد بطة وردة تفاحة موزة بطيخة بيتزا همبرغر آيس كريم كعكة نظارة ساعة مفتاح كرسي طاولة تلفون تلفزيون كمبيوتر كرة قدم دراجة جبل بحر غيمة مطر ثلج قوس قزح نجمة صاروخ روبوت تاج سيف مظلّة شمعة هدية بالون مزهرية فنجان قهوة إبريق شاي سلّم باب شبّاك جسر برج قلعة خيمة مخدّة سرير حذاء قبّعة قميص نحلة فراشة عنكبوت حلزون سلحفاة أرنب ثعبان حصان جمل بقرة دجاجة بيضة مقص قلم كتاب حقيبة شنطة سلّة غيتار طبل ميكروفون كاميرا مصباح ساعة رملية مغناطيس'.split(' ');
+const PAL=['#1b1b1b','#e8463a','#2f6fe0','#2fbf6a','#f7b500','#8e44ad','#ff7fb3','#8b5a2b'];
+let players=['لاعب ١','لاعب ٢','لاعب ٣'],secs=60,pts={},drawer=0,word='',left=0,tmr=null,bag=[],col=PAL[0],size=6,erase=false,actx=null;
+try{const s=JSON.parse(localStorage.getItem('drawPlayers'));if(Array.isArray(s)&&s.length>1)players=s}catch(e){}
+const show=id=>{document.querySelectorAll('.screen').forEach(s=>s.classList.toggle('on',s.id===id));$('#quit').style.display=id==='setup'?'none':'block'};
+const esc=s=>s.replace(/[<>&"]/g,'');
+const shuffle=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a};
+function beep(f,d,t,v){try{if(!actx)return;const o=actx.createOscillator(),g=actx.createGain();o.type=t||'triangle';o.frequency.value=f;g.gain.value=v||.06;o.connect(g);g.connect(actx.destination);o.start();g.gain.exponentialRampToValueAtTime(.0001,actx.currentTime+d);o.stop(actx.currentTime+d)}catch(e){}}
+
+function renderPlayers(){
+  $('#plist').innerHTML=players.map((p,i)=>`<span class="chip">${p}<button data-i="${i}" aria-label="شيل ${p}">✕</button></span>`).join('');
+  $('#start').disabled=players.length<2;
+  try{localStorage.setItem('drawPlayers',JSON.stringify(players))}catch(e){}
+}
+$('#plist').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;players.splice(+b.dataset.i,1);renderPlayers()});
+$('#addF').addEventListener('submit',e=>{e.preventDefault();const v=esc($('#nn').value.trim());if(v&&!players.includes(v)){players.push(v);renderPlayers()}$('#nn').value=''});
+$('#secs').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;secs=+b.dataset.v;$('#secs').querySelectorAll('button').forEach(x=>x.classList.toggle('sel',x===b))});
+
+/* canvas */
+const cv=$('#cv'),ctx=cv.getContext('2d');let drawing=false,lx=0,ly=0;
+function fit(){
+  const r=cv.getBoundingClientRect(),d=window.devicePixelRatio||1;
+  if(!r.width)return;
+  const img=cv.width?ctx.getImageData(0,0,cv.width,cv.height):null;
+  cv.width=r.width*d;cv.height=r.height*d;ctx.setTransform(d,0,0,d,0,0);
+  ctx.fillStyle='#fffdf6';ctx.fillRect(0,0,r.width,r.height);
+  if(img)ctx.putImageData(img,0,0);
+}
+const roC=new ResizeObserver(fit);roC.observe($('#page'));
+function clearCv(){const r=cv.getBoundingClientRect();ctx.fillStyle='#fffdf6';ctx.fillRect(0,0,r.width,r.height)}
+function pt(e){const r=cv.getBoundingClientRect();return [e.clientX-r.left,e.clientY-r.top]}
+cv.addEventListener('pointerdown',e=>{e.preventDefault();cv.setPointerCapture(e.pointerId);drawing=true;[lx,ly]=pt(e);line(lx,ly,lx+.1,ly+.1)});
+cv.addEventListener('pointermove',e=>{if(!drawing)return;const [x,y]=pt(e);line(lx,ly,x,y);lx=x;ly=y});
+['pointerup','pointercancel'].forEach(t=>cv.addEventListener(t,()=>drawing=false));
+function line(a,b,c,d){ctx.strokeStyle=erase?'#fffdf6':col;ctx.lineWidth=erase?28:size;ctx.lineCap='round';ctx.lineJoin='round';ctx.beginPath();ctx.moveTo(a,b);ctx.lineTo(c,d);ctx.stroke()}
+function tray(){
+  $('#tray').innerHTML=PAL.map(c=>`<button data-c="${c}" style="background:${c}" class="${!erase&&c===col?'sel':''}" aria-label="لون"></button>`).join('')+
+   `<button class="tool ${size===12?'sel':''}" data-s="1">عريض</button><button class="tool ${erase?'sel':''}" data-e="1">ممحاة</button><button class="tool" data-x="1">امسح الكل</button>`;
+}
+$('#tray').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;
+  if(b.dataset.c){col=b.dataset.c;erase=false}else if(b.dataset.s){size=size===12?6:12}else if(b.dataset.e){erase=!erase}else if(b.dataset.x)clearCv();tray()});
+
+/* turns */
+function nextWord(){if(!bag.length)bag=shuffle(WORDS);word=bag.pop()}
+function turnScreen(){
+  nextWord();
+  $('#tName').textContent='دور '+players[drawer]+' يرسم';$('#secret').textContent='';$('#see').textContent='ورّيني الكلمة';$('#see').dataset.s='';
+  show('turn');
+}
+$('#see').addEventListener('click',e=>{const b=e.currentTarget;
+  if(!b.dataset.s){$('#secret').textContent=word;b.textContent='جاهز! ابدأ الرسم';b.dataset.s='1'}else startDraw()});
+$('#skip').addEventListener('click',()=>{nextWord();if($('#see').dataset.s)$('#secret').textContent=word});
+function startDraw(){
+  show('play');fit();clearCv();erase=false;col=PAL[0];size=6;tray();
+  $('#who').textContent=players[drawer]+' بيرسم';
+  $('#guess').innerHTML=players.map((p,i)=>i===drawer?'':`<button data-i="${i}">${p} عرفها!</button>`).join('')+'<button class="none" data-i="-1">ما حدا عرف</button>';
+  left=secs;$('#clk').textContent=left;$('#clk').classList.remove('low');
+  clearInterval(tmr);tmr=setInterval(()=>{left--;$('#clk').textContent=left;$('#clk').classList.toggle('low',left<=10);if(left<=10&&left>0)beep(880,.05,'square',.04);if(left<=0)endTurn(-1)},1000);
+}
+let peekT=null;
+$('#peek').addEventListener('click',()=>{$('#peek').textContent=word;clearTimeout(peekT);peekT=setTimeout(()=>$('#peek').textContent='الكلمة',1500)});
+$('#guess').addEventListener('click',e=>{const b=e.target.closest('button');if(b)endTurn(+b.dataset.i)});
+function endTurn(g){
+  clearInterval(tmr);
+  if(g>=0){pts[players[g]]=(pts[players[g]]||0)+2;pts[players[drawer]]=(pts[players[drawer]]||0)+1;beep(784,.12);setTimeout(()=>beep(1046,.2),120);
+    $('#rT').textContent=players[g]+' عرفها!';$('#rS').textContent=`الكلمة كانت «${word}» · +٢ لـ${players[g]} و+١ لـ${players[drawer]}`}
+  else{beep(200,.3,'sawtooth',.06);$('#rT').textContent='ما حدا عرف!';$('#rS').textContent=`الكلمة كانت «${word}»`}
+  $('#board').innerHTML=players.slice().sort((a,b)=>(pts[b]||0)-(pts[a]||0)).map(p=>`<div><span>${p}</span><span>${pts[p]||0}</span></div>`).join('');
+  drawer=(drawer+1)%players.length;
+  $('#next').textContent='دور '+players[drawer];
+  show('res');
+}
+$('#start').addEventListener('click',()=>{try{actx=actx||new (window.AudioContext||window.webkitAudioContext)();actx.resume&&actx.resume()}catch(e){actx=null}pts={};drawer=0;turnScreen()});
+$('#next').addEventListener('click',turnScreen);
+const stop=()=>{clearInterval(tmr);show('setup')};
+$('#back').addEventListener('click',stop);$('#quit').addEventListener('click',stop);
+renderPlayers();
+}
+</script>
+</body>
+</html>

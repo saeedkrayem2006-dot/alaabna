@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>مين الأسرع؟</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Lalezar&family=Cairo:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+/*
+VOICE: loud, playful game-show night, three friends around one phone.
+IDEA: a game-show buzzer table — three glowing buzzer pads, one per player.
+PICTURE: the three pads themselves fill the whole screen; they light up on "اضغط!".
+COLOUR and TYPE: deep night arena #14101f, coral / teal / gold pads; Lalezar for shouts, Cairo for text.
+LAYOUT: three stacked full-width pads; top pad turned 180° for the player sitting opposite.
+*/
+:root{color-scheme:dark;--bg:#14101f;--ink:#f6f1ff;--p0:#ff5a5f;--p1:#18c4b4;--p2:#ffc23d;--go:#3dff8f;--no:#ff8a1f}
+*{box-sizing:border-box;min-width:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 Cairo,system-ui,sans-serif;overflow:hidden;user-select:none;-webkit-user-select:none}
+.screen{position:fixed;inset:0;display:none}
+.screen.on{display:flex}
+/* setup */
+#setup{flex-direction:column;align-items:center;justify-content:center;gap:18px;padding:24px;overflow:auto;
+ background:radial-gradient(circle at 50% 0%,#3a2560 0%,var(--bg) 60%)}
+h1{font:400 clamp(44px,12vw,72px)/1.05 Lalezar,Cairo,sans-serif;margin:0;text-align:center}
+h1 span{display:block;font-size:.4em;font-family:Cairo;font-weight:700;opacity:.75;margin-top:6px}
+.buzz{display:flex;gap:14px;justify-content:center;margin:4px 0 6px}
+.buzz i{width:58px;height:58px;border-radius:50%;box-shadow:inset 0 -8px 0 rgba(0,0,0,.25),0 0 24px currentColor;animation:bob 1.6s ease-in-out infinite}
+.buzz i:nth-child(1){background:var(--p0);color:var(--p0)}
+.buzz i:nth-child(2){background:var(--p1);color:var(--p1);animation-delay:.2s}
+.buzz i:nth-child(3){background:var(--p2);color:var(--p2);animation-delay:.4s}
+@keyframes bob{50%{transform:translateY(-6px)}}
+.card{width:min(420px,100%);background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:20px;padding:18px;display:grid;gap:12px}
+.row{display:flex;align-items:center;gap:10px}
+.dot{width:22px;height:22px;border-radius:50%;flex:none}
+input{flex:1;font:700 16px Cairo,sans-serif;padding:11px 14px;border-radius:12px;border:2px solid transparent;background:rgba(255,255,255,.1);color:var(--ink);min-height:46px}
+input:focus{outline:none;border-color:var(--ink)}
+.seg{display:flex;gap:8px}
+.seg button{flex:1;min-height:44px;border-radius:12px;border:2px solid rgba(255,255,255,.2);background:none;color:var(--ink);font:700 16px Cairo}
+.seg button.sel{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.big{min-height:58px;width:min(420px,100%);border:0;border-radius:18px;background:var(--go);color:#0b2a17;font:400 30px Lalezar,Cairo;box-shadow:0 6px 0 #1a9c52;cursor:pointer}
+.big:active{transform:translateY(4px);box-shadow:0 2px 0 #1a9c52}
+button:focus-visible{outline:3px solid #fff;outline-offset:3px}
+.rules{width:min(420px,100%);font-size:15px;opacity:.85;margin:0;padding-inline-start:20px}
+.rules li{margin:3px 0}
+/* game */
+#game{flex-direction:column}
+.pad{flex:1;position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;
+ touch-action:none;border-bottom:3px solid var(--bg);transition:background .12s;overflow:hidden;--c:#888}
+.pad:last-child{border-bottom:0}
+.pad.flip{transform:rotate(180deg)}
+.pad{background:color-mix(in srgb,var(--c) 22%,var(--bg))}
+.pad .nm{font:900 18px Cairo;opacity:.9}
+.pad .msg{font:400 clamp(34px,10vw,56px)/1.05 Lalezar,Cairo;text-align:center;padding:0 12px}
+.pad .sc{display:flex;gap:6px;margin-top:6px}
+.pad .sc b{width:14px;height:14px;border-radius:50%;background:rgba(255,255,255,.18)}
+.pad .sc b.f{background:var(--c);box-shadow:0 0 8px var(--c)}
+.pad.go{background:var(--go);color:#062712}
+.pad.go .sc b.f{background:#062712;box-shadow:none}
+.pad.no{background:var(--no);color:#2b1300}
+.pad.out{background:#2a2433;color:#8d84a0}
+.pad.win{background:var(--c);color:#14101f;animation:pulse .5s ease-in-out 2}
+.pad.win .sc b.f{background:#14101f;box-shadow:none}
+@keyframes pulse{50%{filter:brightness(1.25)}}
+.pad.shake{animation:shake .35s}
+@keyframes shake{25%{translate:-8px 0}75%{translate:8px 0}}
+#quit{position:fixed;top:50%;left:10px;translate:0 -50%;z-index:5;min-width:44px;min-height:44px;border-radius:50%;border:0;
+ background:rgba(0,0,0,.45);color:#fff;font:700 18px Cairo}
+/* winner */
+#end{flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:24px;text-align:center}
+#end .crown{width:120px;height:90px}
+#end p{margin:0;font-size:18px;opacity:.85}
+#final{display:grid;gap:8px;width:min(360px,100%)}
+#final div{display:flex;justify-content:space-between;padding:10px 16px;border-radius:12px;background:rgba(255,255,255,.07);font-weight:700}
+.ghost{min-height:48px;width:min(420px,100%);border-radius:16px;border:2px solid rgba(255,255,255,.3);background:none;color:var(--ink);font:700 17px Cairo}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+#setup{padding-top:64px}
+</style>
+</head>
+<body>
+
+<section id="setup" class="screen on">
+  <a href="index.html" style="position:absolute;top:12px;right:12px;z-index:9;display:inline-flex;align-items:center;gap:6px;min-height:40px;padding:0 14px;border-radius:99px;background:rgba(255,255,255,.14);color:inherit;font:700 15px Cairo,sans-serif;text-decoration:none">→ ألعابنا</a>
+  <div class="buzz" aria-hidden="true"><i></i><i></i><i></i></div>
+  <h1>مين الأسرع؟<span>لعبة لثلاث أشخاص على تلفون واحد</span></h1>
+  <div class="card">
+    <div class="row"><span class="dot" style="background:var(--p0)"></span><input id="n0" maxlength="12" value="لاعب ١" aria-label="اسم اللاعب الأول"></div>
+    <div class="row"><span class="dot" style="background:var(--p1)"></span><input id="n1" maxlength="12" value="لاعب ٢" aria-label="اسم اللاعب الثاني"></div>
+    <div class="row"><span class="dot" style="background:var(--p2)"></span><input id="n2" maxlength="12" value="لاعب ٣" aria-label="اسم اللاعب الثالث"></div>
+    <div class="seg" id="target" role="group" aria-label="كم نقطة للفوز">
+      <button data-v="3">٣ نقاط</button><button data-v="5" class="sel">٥ نقاط</button><button data-v="7">٧ نقاط</button>
+    </div>
+  </div>
+  <button class="big" id="start">يلا نبلش!</button>
+  <ul class="rules">
+    <li>حطّوا التلفون عالطاولة بالنص، وكل واحد إصبعه عالمربع تبعه.</li>
+    <li>لما يصير لونك <b style="color:var(--go)">أخضر ويكتب «اضغط!»</b> — أول واحد بيضغط بياخد نقطة.</li>
+    <li>إذا ضغطت قبل الوقت أو عـ<b style="color:var(--no)">«مش هلق!»</b> بتخسر نقطة وبتطلع من الجولة.</li>
+  </ul>
+</section>
+
+<section id="game" class="screen">
+  <div class="pad flip" data-i="0"></div>
+  <div class="pad" data-i="1"></div>
+  <div class="pad" data-i="2"></div>
+  <button id="quit" aria-label="رجوع">✕</button>
+</section>
+
+<section id="end" class="screen">
+  <svg class="crown" viewBox="0 0 120 90" aria-hidden="true">
+    <path d="M10 75 L18 25 L42 50 L60 12 L78 50 L102 25 L110 75 Z" fill="#ffc23d"/>
+    <path d="M10 75 L110 75 L108 86 L12 86 Z" fill="#d99a12"/>
+    <circle cx="60" cy="12" r="7" fill="#ff5a5f"/><circle cx="18" cy="25" r="6" fill="#18c4b4"/><circle cx="102" cy="25" r="6" fill="#18c4b4"/>
+  </svg>
+  <h1 id="wname"></h1>
+  <p>بطل السرعة!</p>
+  <div id="final"></div>
+  <button class="big" id="again">جولة كمان</button>
+  <button class="ghost" id="home">غيّر الأسماء</button>
+</section>
+
+<script>
+{
+const $=s=>document.querySelector(s);
+const pads=[...document.querySelectorAll('.pad')];
+const cols=['var(--p0)','var(--p1)','var(--p2)'];
+let names=[],score=[0,0,0],target=5,state='idle',out=[false,false,false],timers=[],actx=null;
+
+const later=(fn,ms)=>timers.push(setTimeout(fn,ms));
+const clear=()=>{timers.forEach(clearTimeout);timers=[]};
+const show=id=>document.querySelectorAll('.screen').forEach(s=>s.classList.toggle('on',s.id===id));
+
+function beep(f,d){
+  try{
+    if(!actx)return;
+    const o=actx.createOscillator(),g=actx.createGain();
+    o.frequency.value=f;o.type='square';g.gain.value=.08;
+    o.connect(g);g.connect(actx.destination);o.start();
+    g.gain.exponentialRampToValueAtTime(.0001,actx.currentTime+d);o.stop(actx.currentTime+d);
+  }catch(e){}
+}
+
+function draw(i,cls,msg){
+  const p=pads[i];
+  p.className='pad'+(i===0?' flip':'')+(cls?' '+cls:'');
+  p.style.setProperty('--c',cols[i]);
+  const dots=Array.from({length:target},(_,k)=>`<b class="${k<score[i]?'f':''}"></b>`).join('');
+  p.innerHTML=`<div class="nm">${names[i]}</div><div class="msg">${msg}</div><div class="sc">${dots}</div>`;
+}
+const drawAll=(cls,msg)=>pads.forEach((_,i)=>draw(i,out[i]?'out':cls,out[i]?'برّا الجولة':msg));
+
+function newRound(){
+  clear();
+  out=[false,false,false];
+  state='wait';
+  drawAll('','استنّوا…');
+  const decoy=Math.random()<.35;
+  let t=1400+Math.random()*2600;
+  if(decoy){
+    later(()=>{state='decoy';drawAll('no','مش هلق!');beep(220,.15)},t);
+    later(()=>{if(state==='decoy'){state='wait';drawAll('','استنّوا…')}},t+800);
+    t+=800+900+Math.random()*1800;
+  }
+  later(()=>{state='go';drawAll('go','اضغط!');beep(880,.12)},t);
+}
+
+function tap(i){
+  if(state==='go'){
+    if(out[i])return;
+    state='point';clear();
+    score[i]++;beep(1320,.2);
+    pads.forEach((_,k)=>draw(k,k===i?'win':'out',k===i?'نقطة!':names[i]+' أسرع'));
+    if(score[i]>=target)later(()=>finish(i),1300);
+    else later(newRound,1500);
+  }else if(state==='wait'||state==='decoy'){
+    if(out[i])return;
+    out[i]=true;score[i]=Math.max(0,score[i]-1);beep(140,.25);
+    draw(i,'out','بكّير! −١');
+    pads[i].classList.add('shake');
+    if(out.every(Boolean)){state='point';clear();later(newRound,1200)}
+  }
+}
+
+pads.forEach((p,i)=>p.addEventListener('pointerdown',e=>{e.preventDefault();tap(i)}));
+
+function start(){
+  try{actx=actx||new (window.AudioContext||window.webkitAudioContext)();actx.resume&&actx.resume()}catch(e){actx=null}
+  names=[0,1,2].map(i=>($('#n'+i).value.trim()||'لاعب '+(i+1)).replace(/[<>&"]/g,''));
+  score=[0,0,0];
+  show('game');
+  pads.forEach((_,i)=>draw(i,'','جاهزين؟'));
+  state='idle';clear();
+  later(newRound,1200);
+}
+
+function finish(w){
+  state='idle';clear();
+  $('#wname').textContent=names[w];
+  $('#wname').style.color=['#ff5a5f','#18c4b4','#ffc23d'][w];
+  $('#final').innerHTML=[0,1,2].sort((a,b)=>score[b]-score[a])
+    .map(i=>`<div><span>${names[i]}</span><span>${score[i]}</span></div>`).join('');
+  show('end');
+}
+
+document.querySelectorAll('#target button').forEach(b=>b.addEventListener('click',()=>{
+  document.querySelectorAll('#target button').forEach(x=>x.classList.toggle('sel',x===b));
+  target=+b.dataset.v;
+}));
+$('#start').addEventListener('click',start);
+$('#again').addEventListener('click',start);
+$('#home').addEventListener('click',()=>{clear();state='idle';show('setup')});
+$('#quit').addEventListener('click',()=>{clear();state='idle';show('setup')});
+}
+</script>
+</body>
+</html>

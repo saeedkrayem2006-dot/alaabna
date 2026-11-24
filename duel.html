@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>المبارزة</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Lalezar&family=Cairo:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+/*
+VOICE: TV quiz-show duel — spotlight, two podium clocks, pressure.
+IDEA: a game-show floor: two contestants, one big screen between them, chess-clock timers.
+PICTURE: the big picture card in the middle, flanked by two glowing clock podiums.
+COLOUR and TYPE: dark plum stage #170d1d with a spotlight, red #ff4d5e vs blue #3f86ff, green "صح", orange "باز"; Lalezar for numbers, Cairo text.
+LAYOUT: clocks on top, picture card, judge's peek strip, two huge buttons at the thumb.
+*/
+:root{color-scheme:dark;--bg:#170d1d;--ink:#fff5ec;--a:#ff4d5e;--b:#3f86ff;--ok:#2fd27a;--pass:#ff9a1f;--gold:#ffd23f}
+*{box-sizing:border-box;min-width:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{margin:0;background:radial-gradient(ellipse at 50% -10%,#4a2357 0%,var(--bg) 60%);color:var(--ink);font:16px/1.5 Cairo,system-ui,sans-serif;overflow:hidden;user-select:none;-webkit-user-select:none}
+.screen{position:fixed;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:18px;overflow:auto}
+.screen.on{display:flex}
+h1{font:400 clamp(44px,13vw,72px)/1.05 Lalezar,Cairo,sans-serif;margin:0;text-align:center}
+h1 span{display:block;font:700 .32em Cairo;opacity:.8;margin-top:6px}
+h2{font:400 26px/1.2 Lalezar,Cairo;margin:0}
+.card{width:min(440px,100%);background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.13);border-radius:20px;padding:14px;display:grid;gap:10px}
+.players{display:flex;flex-wrap:wrap;gap:8px}
+.chip{display:flex;align-items:center;gap:4px;background:rgba(255,255,255,.12);border-radius:99px;padding:4px 6px 4px 14px;font-weight:700}
+.chip button{width:30px;height:30px;border-radius:50%;border:0;background:rgba(0,0,0,.3);color:#fff;font:700 15px Cairo}
+.add{display:flex;gap:8px}
+input{flex:1;font:700 16px Cairo,sans-serif;padding:10px 14px;border-radius:12px;border:2px solid transparent;background:rgba(255,255,255,.1);color:var(--ink);min-height:46px}
+input:focus{outline:none;border-color:var(--gold)}
+.add button{min-width:64px;border-radius:12px;border:0;background:var(--gold);color:#2a1530;font:900 16px Cairo}
+.cats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.cats button,.seg button{min-height:52px;border-radius:14px;border:2px solid rgba(255,255,255,.18);background:none;color:var(--ink);font:700 15px Cairo;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.2;padding:4px}
+.cats button i{font-style:normal;font-size:22px}
+.cats button.sel,.seg button.sel{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.seg{display:flex;gap:8px}.seg button{flex:1;min-height:44px}
+.lab{font-size:14px;opacity:.75;margin:0}
+.big{min-height:60px;width:min(440px,100%);border:0;border-radius:18px;background:var(--gold);color:#2a1530;font:400 30px Lalezar,Cairo;box-shadow:0 6px 0 #b8900a;cursor:pointer}
+.big:active{transform:translateY(4px);box-shadow:0 2px 0 #b8900a}
+.big:disabled{opacity:.4}
+.ghost{min-height:48px;width:min(440px,100%);border-radius:16px;border:2px solid rgba(255,255,255,.3);background:none;color:var(--ink);font:700 17px Cairo}
+button:focus-visible{outline:3px solid #fff;outline-offset:3px}
+/* draw */
+.vs{display:flex;align-items:center;gap:12px;width:min(440px,100%)}
+.slot{flex:1;min-height:110px;border-radius:20px;display:grid;place-items:center;font:400 clamp(26px,8vw,38px)/1.1 Lalezar,Cairo;text-align:center;padding:10px;color:#fff}
+.slot.a{background:var(--a)}.slot.b{background:var(--b)}
+.slot.spin{animation:jig .12s infinite alternate}
+@keyframes jig{to{transform:translateY(-3px)}}
+.vs b{font:400 36px Lalezar,Cairo;color:var(--gold)}
+/* duel */
+#duel{justify-content:flex-start;gap:12px;padding-top:max(14px,env(safe-area-inset-top))}
+.clocks{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;width:min(480px,100%)}
+.clk{border-radius:18px;padding:8px 10px;text-align:center;background:rgba(255,255,255,.06);border:3px solid transparent;transition:transform .2s,opacity .2s;opacity:.55}
+.clk .n{font:900 16px Cairo;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.clk .t{font:400 clamp(44px,14vw,64px)/1 Lalezar,Cairo;font-variant-numeric:tabular-nums}
+.clk .bar{height:6px;border-radius:9px;background:rgba(255,255,255,.12);overflow:hidden;margin-top:4px}
+.clk .bar i{display:block;height:100%;width:100%;border-radius:9px}
+.clk.a .t{color:var(--a)}.clk.a .bar i{background:var(--a)}
+.clk.b .t{color:var(--b)}.clk.b .bar i{background:var(--b)}
+.clk.on{opacity:1;transform:scale(1.04)}
+.clk.a.on{border-color:var(--a);box-shadow:0 0 28px #ff4d5e66}
+.clk.b.on{border-color:var(--b);box-shadow:0 0 28px #3f86ff66}
+.clk.low .t{animation:blink .5s infinite}
+@keyframes blink{50%{opacity:.35}}
+.turn{font:700 17px Cairo;margin:0;text-align:center}
+.pic{position:relative;width:min(480px,100%);flex:1;min-height:200px;max-height:340px;border-radius:26px;background:linear-gradient(160deg,#fff,#f1e7f4);display:grid;place-items:center;box-shadow:0 14px 40px rgba(0,0,0,.45);overflow:hidden}
+.pic .em{font-size:min(42vw,170px);line-height:1}
+.pic .sw{position:absolute;inset:18px;border-radius:18px;box-shadow:inset 0 0 0 2px rgba(0,0,0,.08)}
+.pic .cat{position:absolute;top:10px;right:14px;font:700 13px Cairo;color:#5b3d66;background:#ffffffcc;border-radius:99px;padding:2px 10px}
+.pic.ok{animation:okf .35s}.pic.ps{animation:psf .35s}
+@keyframes okf{0%{box-shadow:0 0 0 10px var(--ok)}}
+@keyframes psf{0%{box-shadow:0 0 0 10px var(--pass)}}
+.flash{position:absolute;inset:auto 0 12px;margin:auto;width:max-content;max-width:90%;background:#170d1dee;color:var(--pass);border-radius:12px;padding:4px 14px;font:900 18px Cairo;display:none}
+.peek{width:min(480px,100%);min-height:46px;border-radius:14px;border:2px dashed rgba(255,255,255,.25);background:none;color:var(--ink);font:700 15px Cairo;touch-action:none}
+.peek b{font:400 22px Lalezar,Cairo;color:var(--gold)}
+.acts{display:grid;grid-template-columns:2fr 1fr;gap:10px;width:min(480px,100%);padding-bottom:max(6px,env(safe-area-inset-bottom))}
+.acts button{min-height:84px;border:0;border-radius:20px;font:400 34px Lalezar,Cairo;cursor:pointer}
+#okB{background:var(--ok);color:#06301a;box-shadow:0 6px 0 #1a8a4e}
+#passB{background:var(--pass);color:#3a1d00;box-shadow:0 6px 0 #b86400;font-size:28px;line-height:1.1}
+#passB small{display:block;font:700 13px Cairo}
+.acts button:active{transform:translateY(4px);box-shadow:none}
+#ready{position:absolute;inset:0;background:#170d1df2;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;z-index:5;padding:20px;text-align:center}
+#ready[hidden]{display:none}
+#quit{position:fixed;top:10px;left:10px;width:44px;height:44px;border-radius:50%;border:0;background:rgba(0,0,0,.4);color:#fff;font:700 18px Cairo;z-index:9;display:none}
+/* end */
+#end .crown{width:110px}
+.board{display:grid;gap:6px;width:min(360px,100%)}
+.board div{display:flex;justify-content:space-between;padding:8px 14px;border-radius:12px;background:rgba(255,255,255,.07);font-weight:700}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+#setup{padding-top:64px}
+</style>
+</head>
+<body>
+<button id="quit" aria-label="رجوع للبداية">✕</button>
+
+<section id="setup" class="screen on">
+  <a href="index.html" style="position:absolute;top:12px;right:12px;z-index:9;display:inline-flex;align-items:center;gap:6px;min-height:40px;padding:0 14px;border-radius:99px;background:rgba(255,255,255,.14);color:inherit;font:700 15px Cairo,sans-serif;text-decoration:none">→ ألعابنا</a>
+  <h1>المبارزة<span>اثنين بيطلعوا عشوائي · صورة · ساعة · مين بيخلص وقته أول بيخسر</span></h1>
+  <div class="card">
+    <p class="lab">اللاعبين</p>
+    <div class="players" id="plist"></div>
+    <form class="add" id="addF"><input id="newName" maxlength="12" placeholder="اسم لاعب جديد" aria-label="اسم لاعب جديد"><button>زيد</button></form>
+  </div>
+  <div class="card">
+    <p class="lab">الموضوع</p>
+    <div class="cats" id="cats"></div>
+    <p class="lab">وقت كل لاعب</p>
+    <div class="seg" id="secs"><button data-v="30">٣٠ ث</button><button data-v="45" class="sel">٤٥ ث</button><button data-v="60">٦٠ ث</button></div>
+  </div>
+  <button class="big" id="drawB">اختار اثنين عشوائي</button>
+</section>
+
+<section id="draw" class="screen">
+  <h2 id="drawCat"></h2>
+  <div class="vs"><div class="slot a" id="sA">؟</div><b>ضد</b><div class="slot b" id="sB">؟</div></div>
+  <p class="lab" id="drawNote" style="text-align:center"></p>
+  <button class="big" id="goB" disabled>يلا نبدأ!</button>
+  <button class="ghost" id="redrawB">اسحب مرة ثانية</button>
+</section>
+
+<section id="duel" class="screen">
+  <div class="clocks">
+    <div class="clk a" id="cA"><div class="n" id="nA"></div><div class="t" id="tA">45</div><div class="bar"><i id="bA"></i></div></div>
+    <div class="clk b" id="cB"><div class="n" id="nB"></div><div class="t" id="tB">45</div><div class="bar"><i id="bB"></i></div></div>
+  </div>
+  <p class="turn" id="turn"></p>
+  <div class="pic" id="pic"><span class="cat" id="picCat"></span><div id="picIn"></div><div class="flash" id="flash"></div></div>
+  <button class="peek" id="peek">الحَكَم: اضغط مطوّل لتشوف الجواب</button>
+  <div class="acts"><button id="okB">صح ✓</button><button id="passB">باز<small>−٣ ثواني</small></button></div>
+  <div id="ready"><h1 id="rdyName"></h1><p class="lab" style="font-size:17px">بيبلش أول. الحَكَم بيكبس «صح» لما الجواب يكون صح، وبتنتقل الصورة الجاية للخصم.</p><button class="big" id="startB">ابدأ الساعة</button></div>
+</section>
+
+<section id="end" class="screen">
+  <svg class="crown" viewBox="0 0 120 90" aria-hidden="true"><path d="M10 75 L18 25 L42 50 L60 12 L78 50 L102 25 L110 75 Z" fill="#ffd23f"/><path d="M10 75 H110 L108 86 H12 Z" fill="#d6a300"/><circle cx="60" cy="12" r="7" fill="#ff4d5e"/><circle cx="18" cy="25" r="6" fill="#3f86ff"/><circle cx="102" cy="25" r="6" fill="#3f86ff"/></svg>
+  <h1 id="wName"></h1>
+  <p class="lab" id="wSub" style="font-size:17px;text-align:center"></p>
+  <div class="board" id="board"></div>
+  <button class="big" id="nextB">مبارزة جديدة عشوائي</button>
+  <button class="ghost" id="revB">ردّ نفس الاثنين</button>
+  <button class="ghost" id="homeB">رجوع للإعدادات</button>
+</section>
+
+<script>
+{
+const $=s=>document.querySelector(s);
+const flag=cc=>cc.toUpperCase().replace(/./g,c=>String.fromCodePoint(127397+c.charCodeAt(0)));
+const FL={PS:'فلسطين',JO:'الأردن',EG:'مصر',SA:'السعودية',AE:'الإمارات',QA:'قطر',KW:'الكويت',BH:'البحرين',OM:'عُمان',YE:'اليمن',IQ:'العراق',SY:'سوريا',LB:'لبنان',MA:'المغرب',DZ:'الجزائر',TN:'تونس',LY:'ليبيا',SD:'السودان',TR:'تركيا',FR:'فرنسا',IT:'إيطاليا',DE:'ألمانيا',ES:'إسبانيا',PT:'البرتغال',GB:'بريطانيا',NL:'هولندا',BE:'بلجيكا',CH:'سويسرا',SE:'السويد',NO:'النرويج',GR:'اليونان',RU:'روسيا',UA:'أوكرانيا',US:'أمريكا',CA:'كندا',MX:'المكسيك',BR:'البرازيل',AR:'الأرجنتين',JP:'اليابان',CN:'الصين',KR:'كوريا الجنوبية',IN:'الهند',AU:'أستراليا',ZA:'جنوب أفريقيا',NG:'نيجيريا',PK:'باكستان',ID:'إندونيسيا',MY:'ماليزيا',IE:'إيرلندا',PL:'بولندا'};
+const E=s=>s.trim().split('\n').map(l=>{const [e,...n]=l.trim().split(' ');return {e,a:n.join(' ')}});
+const CATS={
+ flags:{t:'أعلام ودول',i:'🏳️',items:Object.entries(FL).map(([c,a])=>({e:flag(c),a}))},
+ fruit:{t:'فواكه',i:'🍉',items:E(`🍎 تفاح
+🍌 موز
+🍇 عنب
+🍉 بطيخ
+🍊 برتقال
+🍋 ليمون
+🍓 فراولة
+🍒 كرز
+🍑 دُرّاق
+🍍 أناناس
+🥭 مانجا
+🥝 كيوي
+🍐 إجاص
+🥥 جوز الهند
+🫐 توت
+🍈 شمام`)},
+ veg:{t:'خضروات',i:'🥕',items:E(`🥕 جزر
+🍅 بندورة
+🥒 خيار
+🌽 ذرة
+🥔 بطاطا
+🧅 بصل
+🧄 ثوم
+🥦 بروكلي
+🍆 باذنجان
+🫑 فلفل حلو
+🌶️ فلفل حار
+🥬 خس
+🍄 فطر
+🫛 بازيلاء
+🥑 أفوكادو
+🫚 زنجبيل`)},
+ food:{t:'أكلات',i:'🍕',items:E(`🍕 بيتزا
+🍔 همبرغر
+🌭 هوت دوغ
+🍟 بطاطا مقلية
+🌮 تاكو
+🧆 فلافل
+🍣 سوشي
+🍜 نودلز
+🍝 معكرونة
+🥗 سلطة
+🍳 بيض مقلي
+🥞 بان كيك
+🧇 وافل
+🍩 دونات
+🍰 كعكة
+🍦 بوظة
+🍿 فوشار
+🥐 كرواسون
+🥨 بريتزل
+🍪 بسكوت
+🍫 شوكولاتة
+🧁 كب كيك
+🥟 فطاير
+🍗 دجاج
+🍚 أرز
+🧀 جبنة
+🥪 ساندويش
+🍯 عسل`)},
+ animals:{t:'حيوانات',i:'🦁',items:E(`🦁 أسد
+🐯 نمر
+🐘 فيل
+🦒 زرافة
+🐪 جمل
+🐴 حصان
+🐄 بقرة
+🐑 خروف
+🐐 ماعز
+🐔 دجاجة
+🐶 كلب
+🐱 قطة
+🐰 أرنب
+🐻 دب
+🐼 باندا
+🐨 كوالا
+🦊 ثعلب
+🐺 ذئب
+🐒 قرد
+🦓 حمار وحشي
+🦘 كنغر
+🐊 تمساح
+🐢 سلحفاة
+🐍 أفعى
+🐬 دلفين
+🐳 حوت
+🦈 قرش
+🐙 أخطبوط
+🦀 سلطعون
+🐧 بطريق
+🦉 بومة
+🦅 نسر
+🦜 ببغاء
+🦩 فلامنغو
+🐝 نحلة
+🦋 فراشة
+🐌 حلزون
+🦔 قنفذ
+🦇 خفاش
+🦦 ثعلب الماء`)},
+ jobs:{t:'مهن',i:'👨‍🚒',items:E(`🧑‍⚕️ دكتور
+👮 شرطي
+🧑‍🍳 طبّاخ
+🧑‍🚒 إطفائي
+🧑‍🏫 معلّم
+🧑‍🌾 مزارع
+🧑‍🔧 ميكانيكي
+🧑‍✈️ طيّار
+🧑‍🚀 رائد فضاء
+🧑‍🎨 رسّام
+👷 عامل بناء
+🕵️ محقّق
+🧑‍💻 مبرمج
+🧑‍⚖️ قاضي
+🧑‍🎤 مغنّي
+💂 حارس
+🧑‍🔬 عالِم
+🧑‍🏭 عامل مصنع`)},
+ colors:{t:'ألوان',i:'🎨',items:[['#e53935','أحمر'],['#1e63e9','أزرق'],['#2e9e44','أخضر'],['#ffd600','أصفر'],['#ff8a00','برتقالي'],['#7b2fbe','بنفسجي'],['#ff6fb1','زهري'],['#7a4a26','بني'],['#111111','أسود'],['#ffffff','أبيض'],['#8e8e8e','رمادي'],['#6ec8ff','سماوي'],['#14245c','كحلي'],['#d4af37','ذهبي'],['#c0c0c0','فضي'],['#16c2b0','تركوازي'],['#7b1730','خمري'],['#e8d4b0','بيج'],['#6b7a2a','زيتي'],['#c6ff00','فسفوري']].map(([c,a])=>({c,a}))},
+};
+CATS.mix={t:'منوّع',i:'🎲',items:Object.values(CATS).flatMap(c=>c.items.map(x=>({...x,k:c.t})))};
+const ORDER=['mix','flags','food','fruit','veg','animals','jobs','colors'];
+
+let players=['لاعب ١','لاعب ٢','لاعب ٣','لاعب ٤'],wins={},cat='mix',secs=45;
+let pA='',pB='',deck=[],cur=null,turn=0,time=[45,45],running=false,last=0,raf=0,actx=null,lastSec=[99,99];
+try{const s=JSON.parse(localStorage.getItem('duelPlayers'));if(Array.isArray(s)&&s.length)players=s}catch(e){}
+
+const show=id=>{document.querySelectorAll('.screen').forEach(s=>s.classList.toggle('on',s.id===id));$('#quit').style.display=id==='setup'?'none':'block'};
+const esc=s=>s.replace(/[<>&"]/g,'');
+const shuffle=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a};
+function beep(f,d,type,vol){try{if(!actx)return;const o=actx.createOscillator(),g=actx.createGain();o.type=type||'square';o.frequency.value=f;g.gain.value=vol||.06;o.connect(g);g.connect(actx.destination);o.start();g.gain.exponentialRampToValueAtTime(.0001,actx.currentTime+d);o.stop(actx.currentTime+d)}catch(e){}}
+function audio(){try{actx=actx||new (window.AudioContext||window.webkitAudioContext)();actx.resume&&actx.resume()}catch(e){actx=null}}
+
+/* setup */
+function renderPlayers(){
+  $('#plist').innerHTML=players.map((p,i)=>`<span class="chip">${p}<button data-i="${i}" aria-label="شيل ${p}">✕</button></span>`).join('')||'<span class="lab">زيد لاعبين</span>';
+  $('#drawB').disabled=players.length<2;
+  try{localStorage.setItem('duelPlayers',JSON.stringify(players))}catch(e){}
+}
+$('#plist').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;players.splice(+b.dataset.i,1);renderPlayers()});
+$('#addF').addEventListener('submit',e=>{e.preventDefault();const v=esc($('#newName').value.trim());if(v&&!players.includes(v)){players.push(v);renderPlayers()}$('#newName').value=''});
+$('#cats').innerHTML=ORDER.map(k=>`<button data-k="${k}" class="${k===cat?'sel':''}"><i>${CATS[k].i}</i>${CATS[k].t}</button>`).join('');
+$('#cats').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;cat=b.dataset.k;$('#cats').querySelectorAll('button').forEach(x=>x.classList.toggle('sel',x===b))});
+$('#secs').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;secs=+b.dataset.v;$('#secs').querySelectorAll('button').forEach(x=>x.classList.toggle('sel',x===b))});
+
+/* draw */
+function draw(){
+  audio();
+  const pool=shuffle(players);pA=pool[0];pB=pool[1];
+  $('#drawCat').textContent='الموضوع: '+CATS[cat].t;
+  $('#goB').disabled=true;$('#drawNote').textContent='';
+  show('draw');
+  const sA=$('#sA'),sB=$('#sB');sA.classList.add('spin');sB.classList.add('spin');
+  let n=0;const steps=18;
+  const spin=()=>{
+    if(n<steps){
+      const r=shuffle(players);sA.textContent=r[0];sB.textContent=r[1]||r[0];
+      beep(400+n*30,.04,'square',.04);n++;setTimeout(spin,60+n*9);
+    }else{
+      sA.textContent=pA;sB.textContent=pB;sA.classList.remove('spin');sB.classList.remove('spin');
+      beep(880,.15);setTimeout(()=>beep(1320,.2),120);
+      $('#drawNote').textContent=`كل واحد إله ${secs} ثانية. ${pA} بيبلش.`;
+      $('#goB').disabled=false;
+    }
+  };spin();
+}
+
+/* duel */
+function fmt(t){return t>=10?Math.ceil(t).toString():Math.max(0,t).toFixed(1)}
+function paintClocks(){
+  [['A',0],['B',1]].forEach(([k,i])=>{
+    $('#t'+k).textContent=fmt(time[i]);
+    $('#b'+k).style.width=Math.max(0,time[i]/secs*100)+'%';
+    const c=$('#c'+k);c.classList.toggle('on',i===turn);c.classList.toggle('low',i===turn&&running&&time[i]<=10);
+  });
+  $('#turn').innerHTML=`دور <b style="color:${turn?'var(--b)':'var(--a)'}">${turn?pB:pA}</b>`;
+}
+function nextPic(){
+  if(!deck.length)deck=shuffle(CATS[cat].items);
+  cur=deck.pop();
+  $('#picCat').textContent=cur.k||CATS[cat].t;
+  $('#picIn').innerHTML=cur.c?`<div class="sw" style="background:${cur.c}"></div>`:`<span class="em">${cur.e}</span>`;
+  $('#peek').textContent='الحَكَم: اضغط مطوّل لتشوف الجواب';
+}
+function loop(now){
+  if(!running)return;
+  const dt=(now-last)/1000;last=now;
+  time[turn]-=dt;
+  const s=Math.ceil(time[turn]);
+  if(s<=10&&s!==lastSec[turn]&&s>0){beep(s<=3?1200:900,.05,'square',.05)}
+  lastSec[turn]=s;
+  if(time[turn]<=0){time[turn]=0;paintClocks();return finish(turn?0:1)}
+  paintClocks();raf=requestAnimationFrame(loop);
+}
+function startDuel(same){
+  time=[secs,secs];turn=0;running=false;deck=shuffle(CATS[cat].items);lastSec=[99,99];
+  $('#nA').textContent=pA;$('#nB').textContent=pB;
+  nextPic();paintClocks();
+  $('#rdyName').textContent=pA;$('#rdyName').style.color='var(--a)';$('#ready').hidden=false;
+  show('duel');
+}
+$('#startB').addEventListener('click',()=>{audio();$('#ready').hidden=true;running=true;last=performance.now();beep(660,.12);raf=requestAnimationFrame(loop)});
+function pulse(cls){const p=$('#pic');p.classList.remove('ok','ps');void p.offsetWidth;p.classList.add(cls)}
+$('#okB').addEventListener('click',()=>{
+  if(!running)return;
+  beep(1046,.08,'triangle',.08);setTimeout(()=>beep(1568,.1,'triangle',.08),70);
+  pulse('ok');turn=turn?0:1;last=performance.now();nextPic();paintClocks();
+});
+let passLock=false;
+$('#passB').addEventListener('click',()=>{
+  if(!running||passLock)return;
+  passLock=true;
+  time[turn]=Math.max(0,time[turn]-3);beep(220,.18,'sawtooth',.07);pulse('ps');
+  const f=$('#flash');f.textContent='الجواب: '+cur.a;f.style.display='block';
+  setTimeout(()=>{f.style.display='none';passLock=false},900);
+  if(time[turn]<=0){paintClocks();running=false;cancelAnimationFrame(raf);return finish(turn?0:1)}
+  nextPic();paintClocks();
+});
+const peek=$('#peek');
+const showAns=e=>{e.preventDefault();if(cur)peek.innerHTML='الجواب: <b>'+cur.a+'</b>'};
+const hideAns=()=>{peek.textContent='الحَكَم: اضغط مطوّل لتشوف الجواب'};
+peek.addEventListener('pointerdown',showAns);peek.addEventListener('pointerup',hideAns);peek.addEventListener('pointerleave',hideAns);peek.addEventListener('pointercancel',hideAns);
+
+function finish(w){
+  running=false;cancelAnimationFrame(raf);
+  const win=w?pB:pA,lose=w?pA:pB;
+  wins[win]=(wins[win]||0)+1;
+  beep(110,.5,'sawtooth',.1);setTimeout(()=>{beep(523,.15,'triangle');setTimeout(()=>beep(659,.15,'triangle'),150);setTimeout(()=>beep(784,.35,'triangle'),300)},500);
+  try{navigator.vibrate&&navigator.vibrate([200,80,200])}catch(e){}
+  setTimeout(()=>{
+    $('#wName').textContent=win+' ربح!';$('#wName').style.color=w?'var(--b)':'var(--a)';
+    $('#wSub').textContent=`خلص وقت ${lose} · بقي مع ${win} ${fmt(time[w])} ثانية`;
+    $('#board').innerHTML=players.slice().sort((a,b)=>(wins[b]||0)-(wins[a]||0)).map(p=>`<div><span>${p}</span><span>${wins[p]||0} فوز</span></div>`).join('');
+    show('end');
+  },700);
+}
+
+function stop(){running=false;cancelAnimationFrame(raf);show('setup')}
+$('#drawB').addEventListener('click',draw);
+$('#redrawB').addEventListener('click',draw);
+$('#goB').addEventListener('click',()=>startDuel());
+$('#nextB').addEventListener('click',draw);
+$('#revB').addEventListener('click',()=>{[pA,pB]=[pB,pA];startDuel()});
+$('#homeB').addEventListener('click',stop);
+$('#quit').addEventListener('click',stop);
+renderPlayers();
+}
+</script>
+</body>
+</html>

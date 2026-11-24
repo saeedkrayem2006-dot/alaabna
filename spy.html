@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>مين الجاسوس؟</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Reem+Kufi:wght@700&family=Cairo:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+/*
+VOICE: sneaky, whispery spy night between three friends.
+IDEA: a secret dossier folder passed hand to hand — open it, read your card, close it.
+PICTURE: a manila folder with a red TOP SECRET stamp and a hat-and-glasses spy silhouette.
+COLOUR and TYPE: deep ink #0f1420 ground, manila #e9d6a8 folder, stamp red #d23a2a; Reem Kufi titles, Cairo text.
+LAYOUT: single column: folder card centred, one big action button below it.
+*/
+:root{color-scheme:dark;--bg:#0f1420;--ink:#f3ecdf;--paper:#e9d6a8;--paper2:#d6bd82;--red:#d23a2a;--dark:#231a0e;--p0:#ff6b6b;--p1:#2ec4b6;--p2:#ffc145}
+*{box-sizing:border-box;min-width:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{margin:0;background:radial-gradient(circle at 50% 20%,#1d2638,var(--bg) 70%);color:var(--ink);font:16px/1.5 Cairo,system-ui,sans-serif;overflow:hidden;user-select:none;-webkit-user-select:none}
+.screen{position:fixed;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:20px;overflow:auto}
+.screen.on{display:flex}
+h1,h2{font:700 clamp(38px,11vw,60px)/1.1 'Reem Kufi',Cairo,sans-serif;margin:0;text-align:center}
+h2{font-size:clamp(28px,8vw,40px)}
+.sub{margin:0;opacity:.8;text-align:center;font-size:17px}
+.card{width:min(420px,100%);background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:18px;padding:16px;display:grid;gap:10px}
+.row{display:flex;align-items:center;gap:10px}
+.dot{width:22px;height:22px;border-radius:50%;flex:none}
+input{flex:1;font:700 16px Cairo,sans-serif;padding:11px 14px;border-radius:12px;border:2px solid transparent;background:rgba(255,255,255,.1);color:var(--ink);min-height:46px}
+input:focus{outline:none;border-color:var(--paper)}
+.seg{display:flex;gap:8px;flex-wrap:wrap}
+.seg button{flex:1 1 30%;min-height:44px;border-radius:12px;border:2px solid rgba(255,255,255,.2);background:none;color:var(--ink);font:700 15px Cairo}
+.seg button.sel{background:var(--paper);color:var(--dark);border-color:var(--paper)}
+.big{min-height:60px;width:min(420px,100%);border:0;border-radius:16px;background:var(--red);color:#fff;font:700 24px 'Reem Kufi',Cairo;box-shadow:0 5px 0 #8a1f15;cursor:pointer}
+.big:active{transform:translateY(3px);box-shadow:0 2px 0 #8a1f15}
+.ghost{min-height:48px;width:min(420px,100%);border-radius:14px;border:2px solid rgba(255,255,255,.3);background:none;color:var(--ink);font:700 17px Cairo}
+button:focus-visible{outline:3px solid #fff;outline-offset:3px}
+.rules{width:min(420px,100%);font-size:15px;opacity:.88;margin:0;padding-inline-start:20px}
+.rules li{margin:3px 0}
+/* folder */
+.folder{position:relative;width:min(340px,86vw);aspect-ratio:1.25;flex:none}
+.folder .back{position:absolute;inset:8% 0 0;background:var(--paper2);border-radius:6px 14px 14px 14px;box-shadow:0 18px 30px rgba(0,0,0,.45)}
+.folder .tab{position:absolute;top:0;right:0;width:38%;height:14%;background:var(--paper2);border-radius:10px 10px 0 0}
+.folder .front{position:absolute;inset:14% 0 0;background:linear-gradient(160deg,var(--paper),#dcc48c);border-radius:6px 6px 14px 14px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;color:var(--dark);padding:14px;text-align:center;overflow:hidden}
+.stamp{position:absolute;top:12%;left:6%;transform:rotate(-14deg);border:3px solid var(--red);color:var(--red);font:700 17px 'Reem Kufi',Cairo;padding:2px 10px;border-radius:6px;opacity:.85}
+.front svg{width:42%;height:auto}
+.front .who{font:900 20px Cairo}
+.front .word{font:700 clamp(30px,9vw,44px)/1.1 'Reem Kufi',Cairo}
+.front .word.spy{color:var(--red)}
+.front .hint{font-size:14px;opacity:.75}
+/* timer */
+.clock{font:700 clamp(64px,22vw,110px)/1 'Reem Kufi',Cairo;font-variant-numeric:tabular-nums;color:var(--paper)}
+.clock.low{color:var(--red)}
+.tips{width:min(420px,100%);background:rgba(255,255,255,.06);border-radius:14px;padding:12px 16px;font-size:15px}
+.tips b{color:var(--paper)}
+/* vote */
+.vote{display:grid;gap:10px;width:min(420px,100%)}
+.vote button{min-height:64px;border-radius:16px;border:0;font:900 22px Cairo;color:#0f1420;cursor:pointer}
+.opts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;width:min(420px,100%)}
+.opts button{min-height:56px;border-radius:14px;border:2px solid var(--paper);background:none;color:var(--ink);font:700 18px Cairo}
+.score{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+.score div{padding:6px 12px;border-radius:99px;background:rgba(255,255,255,.08);font-weight:700;font-size:15px}
+#quit{position:fixed;top:12px;left:12px;min-width:44px;min-height:44px;border-radius:50%;border:0;background:rgba(255,255,255,.1);color:#fff;font:700 18px Cairo;z-index:5;display:none}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+#setup{padding-top:64px}
+</style>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="spyman" viewBox="0 0 120 100">
+    <ellipse cx="60" cy="34" rx="56" ry="9" fill="#231a0e"/>
+    <path d="M30 34 Q30 4 60 4 Q90 4 90 34 Z" fill="#231a0e"/>
+    <rect x="30" y="26" width="60" height="7" fill="#d23a2a"/>
+    <path d="M34 44 Q60 100 86 44 Z" fill="#3a2c18"/>
+    <circle cx="47" cy="52" r="10" fill="#0f1420"/><circle cx="73" cy="52" r="10" fill="#0f1420"/>
+    <rect x="56" y="50" width="8" height="3" fill="#0f1420"/>
+    <circle cx="44" cy="49" r="3" fill="rgba(255,255,255,.5)"/><circle cx="70" cy="49" r="3" fill="rgba(255,255,255,.5)"/>
+    <path d="M26 100 Q60 70 94 100 Z" fill="#231a0e"/>
+  </symbol>
+</svg>
+
+<button id="quit" aria-label="رجوع للبداية">✕</button>
+
+<section id="setup" class="screen on">
+  <a href="index.html" style="position:absolute;top:12px;right:12px;z-index:9;display:inline-flex;align-items:center;gap:6px;min-height:40px;padding:0 14px;border-radius:99px;background:rgba(255,255,255,.14);color:inherit;font:700 15px Cairo,sans-serif;text-decoration:none">→ ألعابنا</a>
+  <div class="folder"><div class="tab"></div><div class="back"></div>
+    <div class="front"><span class="stamp">سرّي جداً</span><svg viewBox="0 0 120 100"><use href="#spyman"/></svg></div></div>
+  <h1>مين الجاسوس؟</h1>
+  <div class="card">
+    <div class="row"><span class="dot" style="background:var(--p0)"></span><input id="n0" maxlength="12" value="لاعب ١" aria-label="اسم اللاعب الأول"></div>
+    <div class="row"><span class="dot" style="background:var(--p1)"></span><input id="n1" maxlength="12" value="لاعب ٢" aria-label="اسم اللاعب الثاني"></div>
+    <div class="row"><span class="dot" style="background:var(--p2)"></span><input id="n2" maxlength="12" value="لاعب ٣" aria-label="اسم اللاعب الثالث"></div>
+    <div class="seg" id="cat" role="group" aria-label="نوع الكلمات"></div>
+  </div>
+  <button class="big" id="start">ابدأ المهمة</button>
+  <ul class="rules">
+    <li>كل واحد بيشوف كلمة سرّية لحاله. اثنين بتطلعلهم نفس الكلمة، والثالث جاسوس ما بيعرفها.</li>
+    <li>بتسألوا بعض أسئلة عن الكلمة بدون ما تقولوها، والجاسوس بيحاول يمثّل إنه بيعرف.</li>
+    <li>بالآخر بتصوّتوا مين الجاسوس. إذا مسكتوه، بيقدر يربح إذا حزر الكلمة.</li>
+  </ul>
+</section>
+
+<section id="pass" class="screen">
+  <p class="sub">أعطوا التلفون لـ</p>
+  <h1 id="passName"></h1>
+  <div class="folder"><div class="tab"></div><div class="back"></div>
+    <div class="front" id="pfront"></div></div>
+  <button class="big" id="reveal"></button>
+</section>
+
+<section id="talk" class="screen">
+  <h2>وقت التحقيق</h2>
+  <div class="clock" id="clock">2:00</div>
+  <div class="tips" id="tips"></div>
+  <button class="big" id="toVote">جاهزين نصوّت</button>
+</section>
+
+<section id="vote" class="screen">
+  <h2>مين الجاسوس؟</h2>
+  <p class="sub">اتفقوا مع بعض واكبسوا عليه</p>
+  <div class="vote" id="voteBtns"></div>
+</section>
+
+<section id="guess" class="screen">
+  <h2 id="gTitle"></h2>
+  <p class="sub" id="gSub"></p>
+  <div class="opts" id="opts"></div>
+</section>
+
+<section id="result" class="screen">
+  <div class="folder"><div class="tab"></div><div class="back"></div>
+    <div class="front" id="rfront"></div></div>
+  <h2 id="rTitle"></h2>
+  <p class="sub" id="rSub"></p>
+  <div class="score" id="score"></div>
+  <button class="big" id="again">جولة جديدة</button>
+  <button class="ghost" id="home">غيّر الأسماء</button>
+</section>
+
+<script>
+{
+const $=s=>document.querySelector(s);
+const sets={
+  'أماكن':['البحر','المدرسة','المستشفى','المطار','العرس','الجامع','السوبرماركت','الملعب','المطعم','الحلاق','الجبل','السينما','المخبز','البنك','حديقة الحيوانات','الكراج'],
+  'أكلات':['شاورما','فلافل','منسف','مقلوبة','بيتزا','كنافة','حمص','مسخّن','ملوخية','برغر','سوشي','قطايف','ورق دوالي','تبولة','شكشوكة','مجدّرة'],
+  'حيوانات':['أسد','جمل','قطة','فيل','زرافة','دجاجة','حصان','قرد','دب','سمكة','نحلة','بقرة','نسر','أرنب','تمساح','بطريق'],
+  'أشياء بالبيت':['تلاجة','كنباية','مخدّة','غسالة','تلفزيون','مكنسة','مراية','فرن','سجادة','ستارة','مروحة','خزانة','فنجان','ساعة','ابريق','دوش']
+};
+const cols=['#ff6b6b','#2ec4b6','#ffc145'];
+let names=[],cat='أماكن',word='',spy=0,step=0,shown=false,pts=[0,0,0],tmr=null,starter=0;
+
+const show=id=>{document.querySelectorAll('.screen').forEach(s=>s.classList.toggle('on',s.id===id));$('#quit').style.display=id==='setup'?'none':'block'};
+const rnd=a=>a[Math.floor(Math.random()*a.length)];
+const shuffle=a=>a.map(v=>[Math.random(),v]).sort((p,q)=>p[0]-q[0]).map(p=>p[1]);
+const spyFace='<svg viewBox="0 0 120 100"><use href="#spyman"/></svg>';
+
+$('#cat').innerHTML=Object.keys(sets).map((k,i)=>`<button class="${i?'':'sel'}" data-k="${k}">${k}</button>`).join('');
+$('#cat').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;
+  cat=b.dataset.k;$('#cat').querySelectorAll('button').forEach(x=>x.classList.toggle('sel',x===b))});
+
+function newRound(){
+  word=rnd(sets[cat]);spy=Math.floor(Math.random()*3);step=0;starter=Math.floor(Math.random()*3);
+  passScreen();
+}
+function passScreen(){
+  shown=false;
+  $('#passName').textContent=names[step];$('#passName').style.color=cols[step];
+  $('#pfront').innerHTML=`<span class="stamp">سرّي جداً</span>${spyFace}<div class="hint">تأكد إنه ما حدا شايف الشاشة</div>`;
+  $('#reveal').textContent='افتح الملف';
+  show('pass');
+}
+function reveal(){
+  if(!shown){
+    shown=true;
+    $('#pfront').innerHTML=step===spy
+      ?`<div class="who">${names[step]}، إنت…</div><div class="word spy">الجاسوس!</div><div class="hint">ما بتعرف الكلمة. النوع: ${cat}. مثّل إنك بتعرفها</div>`
+      :`<div class="who">${names[step]}، الكلمة هي:</div><div class="word">${word}</div><div class="hint">النوع: ${cat}. واحد منكم ما بيعرفها</div>`;
+    $('#reveal').textContent=step<2?'سكّر ومرّر':'سكّر وابدأوا';
+  }else{
+    step++;
+    if(step<3)passScreen();else talk();
+  }
+}
+function talk(){
+  show('talk');
+  $('#tips').innerHTML=`<b>${names[starter]}</b> بيبلش يسأل. كل واحد بيسأل اللي جنبه سؤال عن الكلمة، مثلاً: «بتروح عليه/بتاكله كل يوم؟» أو «شو لونه؟». لا تكونوا واضحين كثير عشان الجاسوس ما يحزر!`;
+  let left=120;
+  const paint=()=>{$('#clock').textContent=Math.floor(left/60)+':'+String(left%60).padStart(2,'0');$('#clock').classList.toggle('low',left<=15)};
+  paint();clearInterval(tmr);
+  tmr=setInterval(()=>{left--;paint();if(left<=0){clearInterval(tmr);vote()}},1000);
+}
+function vote(){
+  clearInterval(tmr);
+  $('#voteBtns').innerHTML=names.map((n,i)=>`<button data-i="${i}" style="background:${cols[i]}">${n}</button>`).join('');
+  show('vote');
+}
+$('#voteBtns').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;
+  const pick=+b.dataset.i;
+  if(pick===spy){
+    $('#gTitle').textContent='مسكتوه! '+names[spy]+' هو الجاسوس';
+    $('#gSub').textContent=names[spy]+'، عندك فرصة أخيرة: احزر الكلمة وبتربح';
+    const choices=shuffle([word,...shuffle(sets[cat].filter(w=>w!==word)).slice(0,5)]);
+    $('#opts').innerHTML=choices.map(w=>`<button data-w="${w}">${w}</button>`).join('');
+    show('guess');
+  }else end(false,`غلطتوا! ${names[pick]} مش الجاسوس`);
+});
+$('#opts').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;
+  if(b.dataset.w===word)end(false,`${names[spy]} حزر الكلمة وهرب!`);
+  else end(true,`${names[spy]} اختار «${b.dataset.w}» — غلط!`);
+});
+function end(caught,msg){
+  if(caught)[0,1,2].forEach(i=>{if(i!==spy)pts[i]++});else pts[spy]+=2;
+  $('#rfront').innerHTML=`<span class="stamp">${caught?'انمسك':'هرب'}</span><div class="who">الجاسوس: ${names[spy]}</div><div class="word">${word}</div><div class="hint">هاي كانت الكلمة</div>`;
+  $('#rTitle').textContent=caught?'ربحوا المحققين!':'ربح الجاسوس!';
+  $('#rTitle').style.color=caught?'#2ec4b6':'#ff6b6b';
+  $('#rSub').textContent=msg+(caught?' · نقطة لكل محقق':' · نقطتين للجاسوس');
+  $('#score').innerHTML=names.map((n,i)=>`<div style="color:${cols[i]}">${n}: ${pts[i]}</div>`).join('');
+  show('result');
+}
+function start(){
+  names=[0,1,2].map(i=>($('#n'+i).value.trim()||'لاعب '+(i+1)).replace(/[<>&"]/g,''));
+  pts=[0,0,0];newRound();
+}
+$('#start').addEventListener('click',start);
+$('#reveal').addEventListener('click',reveal);
+$('#toVote').addEventListener('click',vote);
+$('#again').addEventListener('click',newRound);
+$('#home').addEventListener('click',()=>{clearInterval(tmr);show('setup')});
+$('#quit').addEventListener('click',()=>{clearInterval(tmr);show('setup')});
+}
+</script>
+</body>
+</html>

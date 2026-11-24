@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ألعابنا — ألعاب جماعية للأصحاب على تلفون واحد</title>
+<meta name="description" content="ألعابنا: ألعاب جماعية مجانية للشلّة بالعربي على تلفون واحد — المبارزة، حرب البالونات، القنبلة الموقوتة، مين الجاسوس، شد الحبل، ارسم وخمّن ومين الأسرع. بدون تنزيل.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Lalezar&family=Cairo:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+/*
+VOICE: cheerful, cute, a gang of four friends inviting you to play.
+IDEA: a game-night arcade cabinet front — a sunny marquee with the four friends, a shelf of game cartridges below.
+PICTURE: the logo — four cute young guys squeezed together, grinning — on a yellow marquee band.
+COLOUR and TYPE: marquee sun yellow #ffcf33, plum ink #2b1340, each game a candy colour; Lalezar wordmark, Cairo text.
+LAYOUT: hero band with logo + wordmark, then two shelves of game cards (one phone / own phone), 2 columns on phones.
+*/
+:root{color-scheme:light dark;--sun:#ffcf33;--ink:light-dark(#2b1340,#fff3e0);--bg:light-dark(#fff7e6,#1c0f2e);--card:light-dark(#ffffff,#2a1a40);--mute:light-dark(#6d5a78,#c9b8d6)}
+:root[data-theme=light]{color-scheme:light}:root[data-theme=dark]{color-scheme:dark}
+*{box-sizing:border-box;min-width:0}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 Cairo,system-ui,sans-serif;overflow-x:clip}
+.hero{background:var(--sun);color:#2b1340;padding:22px max(5vw,16px) 30px;text-align:center;position:relative;overflow:hidden}
+.hero::before,.hero::after{content:"";position:absolute;border-radius:50%;background:rgba(255,255,255,.35)}
+.hero::before{width:220px;height:220px;top:-90px;right:-60px}.hero::after{width:160px;height:160px;bottom:-80px;left:-40px}
+.logo{position:relative;width:min(440px,96%);height:auto;display:block;margin:0 auto}
+.word{position:relative;font:400 clamp(56px,17vw,104px)/.95 Lalezar,Cairo;margin:-6px 0 0;color:#2b1340;text-shadow:0 5px 0 #ff6f61}
+.tag{position:relative;margin:6px 0 0;font:700 17px Cairo}
+.wrap{max-width:1100px;margin:0 auto;padding:22px max(4vw,14px) 40px}
+.shelf{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin:18px 0 12px}
+.shelf h2{font:400 clamp(28px,8vw,36px)/1.1 Lalezar,Cairo;margin:0}
+.shelf p{margin:0;color:var(--mute);font-size:15px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,160px),1fr));gap:12px}
+@media(min-width:700px){.grid{grid-template-columns:repeat(auto-fill,minmax(220px,1fr))}}
+.g{display:flex;flex-direction:column;text-decoration:none;color:var(--ink);background:var(--card);border-radius:22px;overflow:hidden;box-shadow:0 6px 0 light-dark(#00000014,#00000055);transition:transform .15s}
+.g:hover,.g:focus-visible{transform:translateY(-4px)}
+.g:focus-visible{outline:3px solid var(--sun);outline-offset:3px}
+.g .art{aspect-ratio:16/10;display:grid;place-items:center;background:var(--c)}
+.g .art svg{width:46%;height:auto}
+.g .tx{padding:10px 12px 14px;display:grid;gap:2px}
+.g b{font:400 22px/1.15 Lalezar,Cairo}
+.g span{font-size:14px;color:var(--mute);line-height:1.4}
+.g i{font-style:normal;font-size:12.5px;font-weight:700;justify-self:start;margin-top:4px;background:light-dark(#f3ead9,#3b2852);border-radius:99px;padding:1px 10px}
+.note{margin:26px 0 0;background:var(--card);border-radius:18px;padding:14px 16px;font-size:15px;color:var(--mute)}
+.note b{color:var(--ink)}
+@keyframes bob{50%{transform:translateY(-5px)}}
+.logo .f{animation:bob 2.4s ease-in-out infinite;transform-box:fill-box;transform-origin:bottom}
+@media(prefers-reduced-motion:reduce){.logo .f{animation:none}.g{transition:none}}
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <svg class="logo" viewBox="0 0 440 200" role="img" aria-label="لوغو ألعابنا: أربع شباب مبسوطين">
+    <defs>
+      <g id="eyes"><ellipse cx="-11" cy="2" rx="5" ry="6.5" fill="#2b1340"/><ellipse cx="11" cy="2" rx="5" ry="6.5" fill="#2b1340"/><circle cx="-9" cy="-1" r="2" fill="#fff"/><circle cx="13" cy="-1" r="2" fill="#fff"/></g>
+      <g id="blush"><ellipse cx="-22" cy="14" rx="7" ry="4" fill="#ff8a8a" opacity=".55"/><ellipse cx="22" cy="14" rx="7" ry="4" fill="#ff8a8a" opacity=".55"/></g>
+    </defs>
+    <!-- 1: curly hair, coral hoodie -->
+    <g transform="translate(60 0)"><g class="f" style="animation-delay:0.0s">
+      <path d="M-46 200 Q-46 140 0 136 Q46 140 46 200 Z" fill="#ff6f61"/>
+      <path d="M-14 140 Q0 152 14 140" stroke="#fff" stroke-width="4" fill="none"/>
+      <circle cy="92" r="44" fill="#c98b5e"/>
+      <g fill="#2b1a12"><circle cx="-30" cy="62" r="15"/><circle cx="-12" cy="52" r="16"/><circle cx="8" cy="50" r="16"/><circle cx="27" cy="58" r="15"/><circle cx="38" cy="74" r="11"/><circle cx="-40" cy="78" r="10"/></g>
+      <g transform="translate(0 94)"><use href="#eyes"/><use href="#blush"/><path d="M-12 16 Q0 28 12 16" stroke="#2b1340" stroke-width="4" fill="none" stroke-linecap="round"/></g>
+    </g>
+    </g>
+    <!-- 2: backwards cap, teal tee -->
+    <g transform="translate(162 -6)"><g class="f" style="animation-delay:0.3s">
+      <path d="M-46 206 Q-46 146 0 142 Q46 146 46 206 Z" fill="#1fc9b6"/>
+      <circle cy="96" r="44" fill="#f2c9a0"/>
+      <path d="M-44 86 Q-42 44 0 42 Q42 44 44 86 Z" fill="#3a6df0"/>
+      <path d="M-40 82 Q-52 86 -55 79 Q-50 72 -38 75 Z" fill="#2a52c4"/>
+      <circle cy="44" r="5" fill="#ffcf33"/>
+      <g transform="translate(0 100)"><use href="#eyes"/><use href="#blush"/><path d="M-14 14 Q0 30 14 14 Z" fill="#2b1340"/><path d="M-8 22 Q0 27 8 22" fill="#ff6f61"/></g>
+    </g>
+    </g>
+    <!-- 3: spiky orange hair, glasses, yellow-green tee -->
+    <g transform="translate(270 -2)"><g class="f" style="animation-delay:0.6s">
+      <path d="M-46 202 Q-46 142 0 138 Q46 142 46 202 Z" fill="#8bd346"/>
+      <circle cy="94" r="44" fill="#ffd8b5"/>
+      <path d="M-42 78 L-36 44 L-22 62 L-14 34 L0 58 L10 32 L18 58 L32 40 L34 64 L44 60 L42 82 Q0 64 -42 78 Z" fill="#ff8a1f"/>
+      <g transform="translate(0 96)"><circle cx="-12" cy="1" r="11" fill="#fff" stroke="#2b1340" stroke-width="3.5"/><circle cx="12" cy="1" r="11" fill="#fff" stroke="#2b1340" stroke-width="3.5"/><line x1="-1" y1="0" x2="1" y2="0" stroke="#2b1340" stroke-width="3.5"/><circle cx="-11" cy="2" r="4.5" fill="#2b1340"/><circle cx="13" cy="2" r="4.5" fill="#2b1340"/><use href="#blush"/><path d="M-10 18 Q0 26 10 18" stroke="#2b1340" stroke-width="4" fill="none" stroke-linecap="round"/></g>
+    </g>
+    </g>
+    <!-- 4: side part, headphones, purple tee -->
+    <g transform="translate(378 2)"><g class="f" style="animation-delay:0.9s">
+      <path d="M-46 198 Q-46 138 0 134 Q46 138 46 198 Z" fill="#9b5de5"/>
+      <circle cy="90" r="44" fill="#a8704a"/>
+      <path d="M-44 84 Q-46 42 2 42 Q44 42 44 74 Q20 56 -10 58 Q-30 62 -44 84 Z" fill="#4a2a16"/>
+      <path d="M-48 92 Q-52 30 0 28 Q52 30 48 92" stroke="#2b1340" stroke-width="7" fill="none"/>
+      <rect x="-56" y="80" width="16" height="28" rx="8" fill="#ff6f61"/><rect x="40" y="80" width="16" height="28" rx="8" fill="#ff6f61"/>
+      <g transform="translate(0 92)"><use href="#eyes"/><use href="#blush"/><path d="M-12 16 Q-2 26 12 14" stroke="#2b1340" stroke-width="4" fill="none" stroke-linecap="round"/></g>
+    </g></g>
+  </svg>
+  <h1 class="word">ألعابنا</h1>
+  <p class="tag">٧ ألعاب للشلّة على تلفون واحد · مجاناً وبدون تنزيل</p>
+</header>
+
+<main class="wrap">
+  <div class="shelf"><h2>على تلفون واحد</h2><p>حطّوا التلفون بالنص وابدأوا</p></div>
+  <div class="grid" id="one"></div>
+
+  <p class="note">ألعاب للشلّة على تلفون واحد: حطّوا التلفون بالنص وابدأوا. ما بدها تسجيل ولا تنزيل.</p>
+</main>
+
+<script>
+{
+const I={
+ duel:'<circle cx="34" cy="52" r="26" fill="#fff"/><circle cx="86" cy="52" r="26" fill="#fff"/><path d="M34 52 V36 M34 52 L44 58" stroke="#2b1340" stroke-width="5" stroke-linecap="round"/><path d="M86 52 V36 M86 52 L76 58" stroke="#2b1340" stroke-width="5" stroke-linecap="round"/>',
+ balloons:'<ellipse cx="44" cy="40" rx="20" ry="24" fill="#ff5a5f"/><ellipse cx="78" cy="46" rx="20" ry="24" fill="#1fd1c1"/><path d="M44 64 Q40 76 48 88 M78 70 Q82 80 74 90" stroke="#fff" stroke-width="2.5" fill="none"/>',
+ bomb:'<circle cx="56" cy="58" r="30" fill="#2b2830"/><path d="M74 34 Q86 18 98 16" stroke="#e8c48a" stroke-width="5" fill="none"/><circle cx="98" cy="16" r="8" fill="#ffd23f"/><ellipse cx="46" cy="48" rx="8" ry="5" fill="#ffffff55"/>',
+ spy:'<ellipse cx="60" cy="40" rx="46" ry="8" fill="#231a0e"/><path d="M34 40 Q34 12 60 12 Q86 12 86 40 Z" fill="#231a0e"/><rect x="34" y="32" width="52" height="6" fill="#d23a2a"/><circle cx="48" cy="60" r="11" fill="#231a0e"/><circle cx="72" cy="60" r="11" fill="#231a0e"/><rect x="56" y="58" width="8" height="3" fill="#231a0e"/>',
+ fastest:'<ellipse cx="60" cy="74" rx="44" ry="12" fill="#00000033"/><rect x="20" y="56" width="80" height="18" rx="9" fill="#2b1340"/><ellipse cx="60" cy="54" rx="34" ry="16" fill="#3dff8f"/><ellipse cx="52" cy="50" rx="12" ry="5" fill="#ffffff88"/>',
+ tug:'<line x1="8" y1="56" x2="112" y2="56" stroke="#8a5a2b" stroke-width="12" stroke-linecap="round"/><line x1="8" y1="56" x2="112" y2="56" stroke="#e3b57a" stroke-width="7" stroke-dasharray="8 5"/><path d="M60 56 L44 44 L44 68 Z M60 56 L76 44 L76 68 Z" fill="#e3262d"/><circle cx="60" cy="56" r="7" fill="#e3262d"/>',
+ draw:'<rect x="16" y="20" width="70" height="66" rx="6" fill="#fff"/><path d="M26 66 Q40 36 52 58 T76 44" stroke="#e8463a" stroke-width="5" fill="none" stroke-linecap="round"/><g transform="rotate(40 92 50)"><rect x="86" y="14" width="14" height="60" rx="3" fill="#f7b500"/><path d="M86 74 L93 88 L100 74 Z" fill="#2b1340"/></g>',
+ quiz:'<path d="M18 22 H102 Q108 22 108 28 V72 Q108 78 102 78 H52 L34 94 V78 H18 Q12 78 12 72 V28 Q12 22 18 22 Z" fill="#fff"/><text x="60" y="66" text-anchor="middle" font-family="Lalezar,Cairo" font-size="48" fill="#ff7a2f">؟</text>',
+ rps:'<circle cx="28" cy="56" r="18" fill="#fff"/><rect x="46" y="36" width="30" height="40" rx="4" fill="#fff"/><g stroke="#fff" stroke-width="7" stroke-linecap="round"><line x1="88" y1="36" x2="108" y2="76"/><line x1="108" y1="36" x2="88" y2="76"/></g>',
+ ladder:'<rect x="14" y="60" width="28" height="28" rx="5" fill="#f3d49c"/><rect x="46" y="60" width="28" height="28" rx="5" fill="#f3d49c"/><rect x="78" y="60" width="28" height="28" rx="5" fill="#f3d49c"/><rect x="46" y="14" width="28" height="28" rx="5" fill="#ffd23f"/><path d="M60 46 V56" stroke="#fff" stroke-width="4" stroke-linecap="round"/>',
+ drawon:'<rect x="14" y="18" width="92" height="66" rx="6" fill="#fffdf6"/><path d="M28 64 Q36 34 50 52 T78 40" stroke="#2f6fe0" stroke-width="5" fill="none" stroke-linecap="round"/><circle cx="88" cy="34" r="8" fill="#f7b500"/><path d="M44 84 L60 96 L76 84" fill="#fffdf6"/>',
+ spyon:'<rect x="18" y="26" width="84" height="60" rx="6" fill="#d8bf86"/><rect x="18" y="20" width="34" height="12" rx="4" fill="#d8bf86"/><rect x="18" y="32" width="84" height="54" rx="6" fill="#e9d6a8"/><rect x="34" y="46" width="44" height="16" rx="3" fill="none" stroke="#d23a2a" stroke-width="3" transform="rotate(-10 56 54)"/>'
+};
+const ONE=[
+ ['duel','المبارزة','اثنين عشوائي، صورة وساعة ٤٥ ثانية لكل واحد','٢ أو أكثر','#ffb3c1'],
+ ['balloons','حرب البالونات','فقّع لونك، اسرق من غيرك، وانتبه من القنابل','٣ لاعبين','#7b4bd1'],
+ ['bomb','القنبلة الموقوتة','قول جواب ومرّر قبل ما تنفجر معك','٣ لاعبين','#ff8a5c'],
+ ['spy','مين الجاسوس؟','اثنين بيعرفوا الكلمة وواحد بيمثّل','٣ لاعبين','#e9d6a8'],
+ ['fastest','مين الأسرع؟','لما يصير أخضر اكبس… بس مش قبل!','٣ لاعبين','#2a1f4a'],
+ ['tug','شد الحبل','اكبسوا بسرعة واسحبوا الشريطة لعندكم','فريقين','#3fa34d'],
+ ['draw','ارسم وخمّن','واحد بيرسم والباقيين بيخمّنوا','٢ أو أكثر','#c99a62']];
+const MULTI=[
+ ['quiz','تحدي المعلومات','١٠ أسئلة، الأسرع بياخد أكثر','٢ أو أكثر','#ff7a2f'],
+ ['rps','حجر ورقة مقص','الكل بيختار بنفس الوقت','٢ أو أكثر','#19c7a0'],
+ ['spyon','الجاسوس أونلاين','كل واحد بيشوف ملفه السرّي على تلفونه، وفيها شات','٣ أو أكثر','#2a3550'],
+ ['drawon','ارسم وخمّن أونلاين','الرسمة بتطلع عند الكل مباشرة، وأشياء غريبة ومضحكة','٢ أو أكثر','#b8874f'],
+ ['ladder','سلّم الكلمات','غيّر حرف بكل دور لتوصل من «قلم» لـ«سفر»','٢ أو أكثر','#1f7a5a']];
+const file={spyon:'spy-online',drawon:'draw-online'};
+const card=([k,t,d,p,c])=>`<a class="g" href="${file[k]||k}.html" style="--c:${c}"><div class="art"><svg viewBox="0 0 120 100" aria-hidden="true">${I[k]}</svg></div><div class="tx"><b>${t}</b><span>${d}</span><i>${p}</i></div></a>`;
+document.getElementById('one').innerHTML=ONE.map(card).join('');
+
+}
+</script>
+</body>
+</html>
