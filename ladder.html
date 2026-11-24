@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>سلّم الكلمات</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Lalezar&family=Cairo:wght@400;700;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="online.css">
+<style>
+/*
+VOICE: clever, tense word duel — one letter at a time, who lands the last step.
+IDEA: a felt word-game board with wooden letter tiles climbing a ladder from the start word to the goal.
+PICTURE: three big wooden tiles of the current word, with the goal word glowing above and the ladder of past words below.
+COLOUR and TYPE: board green #0e4a38 into #1f7a5a, wooden tiles #f3d49c, gold goal #ffd23f; Lalezar for tiles, Cairo text.
+LAYOUT: goal on top, turn + timer, current tiles, keyboard (on your turn) or vote, then the ladder.
+*/
+:root{color-scheme:dark;--bg:#0b3a2c;--bg2:#1f7a5a;--acc:#ffd23f;--acc-ink:#2a2000;--wood:#f3d49c;--wood2:#d9ad62}
+#play{justify-content:flex-start;gap:10px;padding-top:58px}
+.goal{display:flex;align-items:center;gap:10px;font-weight:900}
+.goal .tl{background:var(--acc);color:var(--acc-ink)}
+.row{display:flex;gap:8px;direction:rtl}
+.tl{width:clamp(50px,15vw,64px);aspect-ratio:1;border-radius:12px;background:linear-gradient(160deg,var(--wood),var(--wood2));color:#3a2408;display:grid;place-items:center;font:400 clamp(30px,10vw,40px)/1 Lalezar,Cairo;box-shadow:0 5px 0 #8a6326,inset 0 2px 0 #fff6}
+.tl.sm{width:38px;font-size:24px;box-shadow:0 3px 0 #8a6326}
+.cur .tl{width:clamp(72px,22vw,92px);font-size:clamp(44px,14vw,58px);border:0;cursor:default}
+.cur.mine .tl{cursor:pointer}
+.cur .tl.sel{outline:4px solid #fff;transform:translateY(-6px)}
+.cur .tl.ch{background:linear-gradient(160deg,#c9f7d9,#7ed6a0)}
+.who{font:900 17px Cairo;text-align:center;margin:0}
+.who .tm{display:inline-block;min-width:40px;margin-inline-start:8px;background:rgba(0,0,0,.25);border-radius:99px;padding:0 10px;font-variant-numeric:tabular-nums}
+.msg{min-height:24px;margin:0;font-weight:700;text-align:center;color:#ffe9a6}
+.kb{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px;width:min(460px,100%)}
+.kb button{min-height:46px;border:0;border-radius:10px;background:rgba(255,255,255,.14);color:#fff;font:900 20px Cairo}
+.kb button:active{background:rgba(255,255,255,.3)}
+.acts{display:grid;grid-template-columns:2fr 1fr;gap:10px;width:min(460px,100%)}
+.acts button{min-height:56px;border:0;border-radius:16px;font:400 24px Lalezar,Cairo}
+#okB{background:var(--acc);color:var(--acc-ink)}#okB:disabled{opacity:.4}
+#passB{background:rgba(255,255,255,.16);color:#fff}
+.vote{display:grid;grid-template-columns:1fr 1fr;gap:10px;width:min(460px,100%)}
+.vote button{min-height:60px;border:0;border-radius:16px;font:400 26px Lalezar,Cairo}
+.vote .y{background:#2fbf6a;color:#fff}.vote .n{background:#e8463a;color:#fff}
+.vote button.sel{outline:4px solid #fff}
+.ladder{display:flex;flex-direction:column-reverse;align-items:center;gap:6px;width:min(460px,100%)}
+.ladder .st{display:flex;align-items:center;gap:10px}
+.ladder .st small{font-size:13px;opacity:.8;min-width:64px}
+.ladder .st.start small{color:var(--acc)}
+.info{font-size:14px;opacity:.85;text-align:center;margin:0}
+.ladder .st .tl.d{background:linear-gradient(160deg,#c9f7d9,#7ed6a0)}
+</style>
+</head>
+<body>
+<a class="home" href="index.html">→ ألعابنا</a>
+
+<section id="lobby" class="screen on">
+  <h1>سلّم الكلمات</h1>
+  <p class="sub">غيّروا حرف واحد بكل دور عشان توصلوا من كلمة لكلمة، مثلاً من «قلم» لـ«سفر». كل كلمة بالطريق لازم تكون كلمة معقولة. اللي بيوصل للكلمة الأخيرة بيربح!</p>
+  <div class="card">
+    <input id="nm" maxlength="14" placeholder="اسمك" aria-label="اسمك">
+    <button class="big" id="create">أنشئ غرفة</button>
+    <div class="or">أو ادخل لغرفة صاحبك</div>
+    <input id="code" inputmode="numeric" maxlength="4" placeholder="كود الغرفة" aria-label="كود الغرفة">
+    <button class="ghost" id="joinB">ادخل</button>
+  </div>
+  <div class="err" id="err"></div>
+</section>
+
+<section id="wait" class="screen">
+  <p class="sub">كود الغرفة — خلّي الباقيين يدخلوه</p>
+  <div class="code" id="codeShow"></div>
+  <div class="plist" id="wplist"></div>
+  <button class="big" id="startB" style="max-width:440px">ابدأ</button>
+  <p class="wait" id="wmsg"></p>
+</section>
+
+<section id="play" class="screen">
+  <div class="goal">لازم توصلوا لـ <div class="row" id="goal"></div></div>
+  <p class="info" id="info"></p>
+  <p class="who" id="who"></p>
+  <div class="row cur" id="cur"></div>
+  <p class="msg" id="msg"></p>
+  <div class="kb" id="kb"></div>
+  <div class="acts" id="acts"><button id="okB">حطّ الكلمة</button><button id="passB">باز</button></div>
+  <div class="vote" id="vote"><button class="y" data-y="1">معقولة ✓</button><button class="n" data-y="0">مش كلمة ✗</button></div>
+  <div class="ladder" id="ladder"></div>
+  <button class="ghost" id="skipB" style="max-width:460px;display:none">علقنا؟ كلمات جديدة</button>
+</section>
+
+<section id="end" class="screen">
+  <h1 id="champ"></h1>
+  <p class="sub" id="esub"></p>
+  <div class="ladder" id="eladder"></div>
+  <p class="info" id="sol"></p>
+  <div class="board" id="board"></div>
+  <button class="big" id="againB" style="max-width:440px">جولة جديدة</button>
+  <p class="wait" id="emsg"></p>
+</section>
+
+<script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+<script src="net.js"></script>
+<script>
+{
+const $=s=>document.querySelector(s);
+const DICT=new Set('كتب كسر كسب لعب شرب ضرب هرب قرب غرب حرب طلب جلب حلب غلب قلب صلب سلب كذب جذب عذب ذهب وهب نهب سحب صحب شحن طحن سجن حزن وزن خزن دفن سكن ثمن زمن امن اكل اخذ امر اسر يسر عسر نشر بشر حشر عشر قشر كشف سمع سمح سمك سمن سفر سفن صفر غفر حفر نفر ظفر قفز قفل قفص نفس نفخ نفع دفع رفع رفض رفق ركض ركب ركع سجد سعد بعد وعد رعد قعد صعد عدد عدل عدس عرس عرق عرض فرض فرح فرق فرن قرن قرد قرص قرش فرش عرش رقص رقم رسم قسم حسم جسم اسم وسم رسب نسب حسب لسع وسع سبع شبع طبع تبع نبع ربع زرع درع فرع قرع شرع جمع دمع لمع طمع شمع شمس همس لمس خمس غمس جلس حرس درس فرس ضرس غرس خرس بحر سحر صخر فخر شعر سعر شكر ذكر فكر سكر بكر مكر قمر عمر تمر سمر ثمر نمر نهر ظهر مهر زهر سهر دهر شهر قهر جهر بيت زيت تين طين عين دين لون كون عون صوت موت حوت توت قوت فول طول قول حول سور نور دور ثور طور صور نوم يوم قوم صوم لوم ثوم سوق ذوق شوق فوق طوق بوق لوح روح باب ناب غاب ذاب تاب شاب طاب نار دار جار فار طار سار غار زار ثار نام قام صام دام عام مال قال نال طال زال سال جال شال خال مات فات باع ضاع ورد برد بلد ولد جلد ملح صلح ملك فلك سلك هلك مسك حبل جبل طبل قبل شجر حجر فجر نجم لحم فحم شحم خبز رمل جمل حمل عمل نمل امل رجل عجل نخل دخل بخل نحل كحل سهل جهل اهل عسل غسل كسل قطن وطن بطن فطر مطر قطر عطر سطر خطر حلم علم ظلم سلم الم قلم كلم ثلج برج سرج مرج درج خرج فرج قمح رمح فتح صبر قبر خبر حبر جبر كبر قصر نصر عصر بصر نسر سيف صيف ضيف كيف ريف كلب قلع قلد قلق كتف كتم كرم حكم حلق خلق غلق فلق حرق سرق شرق ورق برق زرق طرق فرد برك ترك شرك درك حرك ضحك سبح ذبح ربح جرح شرح مدح قدح نجح لبس حبس عبس يبس كنس جنس انس حمص قمص نقص رخص فحص لحن سخن عجن حصن سمل مسح نصح ملا سبق عشق شنق خنق صدق رزق لصق فقد عقد نقد حقد رقد سند جند هند عند كبد عبد زبد لبد مدد شدد سجل خجل نزل غزل هزل عزل فصل وصل حصل نسل رسل اصل نقل ثقل عقل حقل صقل بغل شغل قتل فتل حلو صحن ذقن لبن جبن تبن عدن معز وزر جزر حذر نذر وتر ستر شتم ختم خدم ندم هدم قدم عدم دهن وهن رهن كهف لهف صرف عرف غرف شرف ظرف حرف زحف سقف وقف خوف جوف صوف شوف لطف عطف قطف خطف نظف سلف حلف خلف علف تلف كفن جفن فنن ورم كوم زيد صيد عيد ريش جيش عيش كيس ميل نيل فيل ذيل ليل كيل سيل'.split(' '));
+const DISP={امن:'أمن',اكل:'أكل',اخذ:'أخذ',امر:'أمر',اسر:'أسر',امل:'أمل',اهل:'أهل',الم:'ألم',انس:'أنس',اصل:'أصل'};
+const show=id=>document.querySelectorAll('.screen').forEach(s=>s.classList.toggle('on',s.id===id));
+const norm=s=>String(s||'').replace(/[ً-ْـ]/g,'').replace(/[أإآ]/g,'ا').replace(/ى/g,'ي').replace(/[^ء-ي]/g,'');
+const disp=w=>DISP[w]||w;
+const L=w=>[...w];
+const diff=(a,b)=>{a=L(a);b=L(b);if(a.length!==b.length)return 99;let d=0;for(let i=0;i<a.length;i++)if(a[i]!==b[i])d++;return d};
+const LETTERS='ا ب ت ث ج ح خ د ذ ر ز س ش ص ض ط ظ ع غ ف ق ك ل م ن ه و ي ء ة'.split(' ');
+const TURN=45,VOTE=20;
+const shuffle=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a};
+let WL=null,G=null;
+function graph(){if(G)return;WL=[...DICT];G={};WL.forEach(w=>G[w]=[]);for(let i=0;i<WL.length;i++)for(let j=i+1;j<WL.length;j++)if(diff(WL[i],WL[j])===1){G[WL[i]].push(WL[j]);G[WL[j]].push(WL[i])}}
+function path(a,b,extra){graph();const nb=w=>{const s=new Set(G[w]||[]);(extra||[]).forEach(x=>{if(diff(x,w)===1)s.add(x)});return [...s]};const prev={[a]:null},q=[a];while(q.length){const x=q.shift();if(x===b){const p=[];let c=b;while(c!=null){p.unshift(c);c=prev[c]}return p}for(const y of nb(x))if(!(y in prev)){prev[y]=x;q.push(y)}}return null}
+
+let st=null,lastKey='',phaseT=0,tmT=null,sel=-1,draft=null,myVote=null;
+let H={timer:null};
+const lob=Net.lobby('ladder',{joined:h=>{show('wait');$('#startB').style.display=h?'block':'none';$('#wmsg').textContent=h?'لما يدخلوا الكل اكبس «ابدأ».':'استنى صاحب الغرفة يبلّش…';render()}});
+const players=()=>Net.list();
+const nameOf=peer=>{const p=players().find(x=>x.peer===peer);return p?p.nm:'لاعب طلع'};
+const meId=()=>{const m=Net.me();return m?m.peer:null};
+function setSt(s){st=s;Net.set({st:s});render()}
+
+/* ---------- host ---------- */
+function newRound(keepSc){
+  graph();
+  let a,b,p;
+  if(!st&&DICT.has('قلم')&&DICT.has('سفر')){a='قلم';b='سفر';p=path(a,b)}
+  else for(let k=0;k<200;k++){a=WL[Math.floor(Math.random()*WL.length)];b=WL[Math.floor(Math.random()*WL.length)];p=path(a,b);if(p&&p.length>=4&&p.length<=6)break}
+  const ps=players(),sc=keepSc||{};ps.forEach(x=>{if(sc[x.peer]==null)sc[x.peer]=0});
+  const order=shuffle(ps.map(x=>x.peer));
+  armTurn({ph:'play',r:(st?st.r:0)+1,m:1,start:a,target:b,best:p.length-1,sol:p.join(' ← '),chain:[{w:a,by:''}],order,ti:0,turn:order[0],prop:null,sc,extra:[],msg:'',winner:null});
+}
+function armTurn(s){clearTimeout(H.timer);setSt(s);H.timer=setTimeout(()=>{if(st.ph==='play')advance('خلص وقت '+nameOf(st.turn))},TURN*1000+600)}
+function advance(msg,patch){
+  const alive=new Set(players().map(p=>p.peer));let ti=st.ti;
+  for(let k=0;k<st.order.length;k++){ti=(ti+1)%st.order.length;if(alive.has(st.order[ti]))break}
+  armTurn({...st,...(patch||{}),ph:'play',m:st.m+1,ti,turn:st.order[ti],prop:null,msg});
+}
+function accept(w,by){
+  const chain=[...st.chain,{w,by}];
+  if(w===st.target){clearTimeout(H.timer);const sc={...st.sc};sc[by]=(sc[by]||0)+1;setSt({...st,ph:'end',chain,sc,winner:by,m:st.m+1,prop:null});return}
+  advance(`${nameOf(by)} حطّ «${disp(w)}»`,{chain});
+}
+function hostStep(){
+  if(!st)return;const ps=players();
+  if(st.ph==='play'){
+    if(!ps.some(p=>p.peer===st.turn)){advance(nameOf(st.turn)+' مش موجود');return}
+    const p=ps.find(x=>x.peer===st.turn);const a=p&&p.a;
+    if(!a||a.m!==st.m)return;
+    if(a.k==='pass'){advance(nameOf(p.peer)+' باز');return}
+    const w=norm(a.w),curW=st.chain[st.chain.length-1].w;
+    if(L(w).length!==3||diff(w,curW)!==1||st.chain.some(c=>c.w===w)){armTurn({...st,m:st.m+1,msg:'حركة مش صحيحة، جرّب كمان'});return}
+    if(DICT.has(w)||st.extra.includes(w)){accept(w,p.peer);return}
+    clearTimeout(H.timer);
+    setSt({...st,ph:'vote',m:st.m+1,prop:{w,by:p.peer},msg:''});
+    H.timer=setTimeout(()=>resolveVote(true),VOTE*1000+600);
+    return;
+  }
+  if(st.ph==='vote'){
+    const voters=ps.filter(p=>p.peer!==st.prop.by);
+    const vs=voters.filter(p=>p.pr.v&&p.pr.v.m===st.m);
+    if(voters.length===0||vs.length===voters.length)resolveVote(false);
+  }
+}
+function resolveVote(){
+  if(!st||st.ph!=='vote')return;clearTimeout(H.timer);
+  const voters=players().filter(p=>p.peer!==st.prop.by),vs=voters.filter(p=>p.pr.v&&p.pr.v.m===st.m);
+  const yes=vs.filter(p=>p.pr.v.y).length,no=vs.length-yes;
+  const {w,by}=st.prop;
+  if(voters.length===0||yes>no){st={...st,extra:[...st.extra,w]};accept(w,by)}
+  else advance(`«${w}» مش مقبولة (${yes} مع، ${no} ضد) — الدور للي بعده`);
+}
+
+/* ---------- everyone ---------- */
+function tiles(w,cls){return L(disp(w)).map(c=>`<div class="tl ${cls||''}">${c}</div>`).join('')}
+function timer(sec){clearTimeout(tmT);const f=()=>{const l=Math.max(0,Math.ceil(sec-(Date.now()-phaseT)/1000));const t=document.querySelector('#who .tm');if(t)t.textContent=l;if(l>0)tmT=setTimeout(f,300)};f()}
+function ladderHTML(){return st.chain.map((c,i)=>`<div class="st ${i===0?'start':''}"><small>${i===0?'البداية':nameOf(c.by)}</small><div class="row">${L(disp(c.w)).map((ch,k)=>`<div class="tl sm ${i>0&&L(c.w)[k]!==L(st.chain[i-1].w)[k]?'d':''}">${ch}</div>`).join('')}</div></div>`).join('')}
+function render(){
+  const ps=players(),h=Net.host(),me=meId(),host=lob.isHost();
+  if(!host&&h&&h.st)st=h.st;
+  $('#wplist').innerHTML=ps.map(p=>`<span class="${p.me?'me':''}">${p.nm}${p.host?' (صاحب الغرفة)':''}</span>`).join('');
+  if(host)$('#startB').disabled=ps.length<2;
+  if(!lob.code())return;
+  if(!host&&!h){$('#wmsg').textContent='صاحب الغرفة مش موجود. استنى أو ادخل كود جديد.';show('wait');return}
+  if(!st){show('wait');return}
+  const key=st.r+':'+st.m+':'+st.ph;
+  if(key!==lastKey){lastKey=key;phaseT=Date.now();sel=-1;draft=null;myVote=null;Net.set({a:null,v:null})}
+  if(st.ph==='end'){
+    show('end');clearTimeout(tmT);
+    $('#champ').textContent=st.winner===me?'إنت ربحت! 🎉':nameOf(st.winner)+' ربح!';
+    $('#esub').textContent=`وصل لـ«${disp(st.target)}» بـ${st.chain.length-1} خطوات`;
+    $('#eladder').innerHTML=ladderHTML();
+    $('#sol').textContent='أقصر طريق كان: '+st.sol.split(' ← ').map(disp).join(' ← ');
+    $('#board').innerHTML=Object.entries(st.sc).sort((a,b)=>b[1]-a[1]).map(([p,s])=>`<div class="${p===me?'me':''}"><span>${nameOf(p)}</span><span>${s} فوز</span></div>`).join('');
+    $('#againB').style.display=host?'block':'none';$('#emsg').textContent=host?'':'صاحب الغرفة بيقدر يبلّش جولة جديدة.';
+    return;
+  }
+  show('play');
+  $('#goal').innerHTML=tiles(st.target);
+  $('#info').textContent=`من «${disp(st.start)}» · أقصر طريق ${st.best} خطوات`;
+  const curW=st.chain[st.chain.length-1].w,mine=st.ph==='play'&&st.turn===me;
+  $('#kb').style.display='none';$('#acts').style.display='none';$('#vote').style.display='none';
+  if(st.ph==='play'){
+    $('#who').innerHTML=(mine?'دورك!':`دور ${nameOf(st.turn)}`)+'<span class="tm"></span>';timer(TURN);
+    const w=draft||curW;
+    $('#cur').className='row cur'+(mine?' mine':'');
+    $('#cur').innerHTML=L(disp(w)).map((c,i)=>`<div class="tl ${i===sel?'sel':''} ${draft&&L(draft)[i]!==L(curW)[i]?'ch':''}" data-i="${i}">${c}</div>`).join('');
+    if(mine){
+      $('#acts').style.display='grid';
+      if(sel>=0){$('#kb').style.display='grid';$('#kb').innerHTML=LETTERS.map(l=>`<button data-l="${l}">${l}</button>`).join('')}
+      let m=(st.msg?st.msg+' · ':'')+'اكبس على حرف عشان تغيّره';
+      if(draft){const d=diff(draft,curW);
+        if(d!==1)m='لازم تغيّر حرف واحد بس';
+        else if(st.chain.some(c=>c.w===draft))m='هاي الكلمة انحطّت قبل';
+        else if(!DICT.has(draft)&&!st.extra.includes(draft))m=`«${draft}» مش بالقاموس — إذا حطّيتها الباقيين بيصوّتوا عليها`;
+        else m=draft===st.target?'هاي الكلمة الأخيرة! حطّها واربح 🔥':'كلمة صح 👍';}
+      $('#msg').textContent=m;
+      $('#okB').disabled=!draft||diff(draft,curW)!==1||st.chain.some(c=>c.w===draft);
+    }else $('#msg').textContent=st.msg||'';
+  }
+  if(st.ph==='vote'){
+    clearTimeout(tmT);phaseT=phaseT||Date.now();
+    const p=st.prop,mineP=p.by===me;
+    $('#who').innerHTML=`${nameOf(p.by)} بدّه يحط «${p.w}»<span class="tm"></span>`;timer(VOTE);
+    $('#cur').className='row cur';$('#cur').innerHTML=tiles(p.w,'ch');
+    if(mineP)$('#msg').textContent='الباقيين بيصوّتوا إذا هاي كلمة معقولة…';
+    else{$('#msg').textContent='هاي كلمة معقولة؟';$('#vote').style.display='grid';$('#vote').querySelectorAll('button').forEach(b=>b.classList.toggle('sel',myVote!==null&&(+b.dataset.y===1)===myVote))}
+  }
+  $('#ladder').innerHTML=ladderHTML();
+  $('#skipB').style.display=host?'block':'none';
+}
+$('#cur').addEventListener('click',e=>{const t=e.target.closest('.tl');if(!t||!st||st.ph!=='play'||st.turn!==meId())return;sel=+t.dataset.i;render()});
+$('#kb').addEventListener('click',e=>{const b=e.target.closest('button');if(!b||sel<0)return;const curW=st.chain[st.chain.length-1].w;const arr=L(curW);arr[sel]=b.dataset.l;draft=arr.join('');if(draft===curW)draft=null;render()});
+$('#okB').addEventListener('click',()=>{if(!draft||!st)return;Net.set({a:{m:st.m,k:'move',w:draft}});$('#acts').style.display='none';$('#kb').style.display='none';$('#msg').textContent='…';if(lob.isHost())setTimeout(hostStep,50)});
+$('#passB').addEventListener('click',()=>{if(!st)return;Net.set({a:{m:st.m,k:'pass'}});if(lob.isHost())setTimeout(hostStep,50)});
+$('#vote').addEventListener('click',e=>{const b=e.target.closest('button');if(!b||!st||st.ph!=='vote')return;myVote=b.dataset.y==='1';Net.set({v:{m:st.m,y:myVote}});render();if(lob.isHost())setTimeout(hostStep,50)});
+$('#startB').addEventListener('click',()=>newRound());
+$('#againB').addEventListener('click',()=>newRound(st&&st.sc));
+$('#skipB').addEventListener('click',()=>newRound(st&&st.sc));
+Net.onChange(()=>{if(lob.isHost())hostStep();render()});
+}
+</script>
+</body>
+</html>

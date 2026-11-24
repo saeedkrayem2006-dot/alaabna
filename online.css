@@ -1,0 +1,33 @@
+/* ألعابنا — shared look for the own-phone games; each page sets --bg, --bg2, --acc, --acc-ink */
+*{box-sizing:border-box;min-width:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{margin:0;background:radial-gradient(circle at 50% 0%,var(--bg2),var(--bg) 70%);color:#fff;font:16px/1.5 Cairo,system-ui,sans-serif;user-select:none;-webkit-user-select:none}
+.screen{min-height:100%;display:none;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:64px 18px 24px}
+.screen.on{display:flex}
+.home{position:fixed;top:12px;right:12px;z-index:9;display:inline-flex;align-items:center;min-height:40px;padding:0 14px;border-radius:99px;background:rgba(255,255,255,.16);color:#fff;font:700 15px Cairo;text-decoration:none}
+h1{font:400 clamp(42px,12vw,66px)/1.05 Lalezar,Cairo,sans-serif;margin:0;text-align:center}
+h2{font:400 clamp(26px,8vw,36px)/1.15 Lalezar,Cairo;margin:0;text-align:center}
+.sub{margin:0;opacity:.85;text-align:center;font-size:16px;max-width:440px}
+.card{width:min(440px,100%);background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.18);border-radius:22px;padding:16px;display:grid;gap:10px}
+input{width:100%;font:700 18px Cairo,sans-serif;padding:12px 14px;border-radius:14px;border:2px solid transparent;background:rgba(255,255,255,.14);color:#fff;min-height:50px;text-align:center}
+input::placeholder{color:rgba(255,255,255,.6)}
+input:focus{outline:none;border-color:var(--acc)}
+.big{min-height:58px;width:100%;border:0;border-radius:18px;background:var(--acc);color:var(--acc-ink);font:400 28px Lalezar,Cairo;box-shadow:0 5px 0 rgba(0,0,0,.28);cursor:pointer}
+.big:active{transform:translateY(3px);box-shadow:0 2px 0 rgba(0,0,0,.28)}
+.big:disabled{opacity:.45}
+.ghost{min-height:48px;width:100%;border-radius:16px;border:2px solid rgba(255,255,255,.35);background:none;color:#fff;font:700 17px Cairo}
+.or{display:flex;align-items:center;gap:10px;opacity:.7;font-size:14px}.or::before,.or::after{content:"";flex:1;height:1px;background:rgba(255,255,255,.3)}
+button:focus-visible,a:focus-visible{outline:3px solid #fff;outline-offset:3px}
+.code{font:400 clamp(64px,22vw,110px)/1 Lalezar,Cairo;letter-spacing:.08em;color:var(--acc);text-align:center}
+.plist{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
+.plist span{background:rgba(255,255,255,.14);border-radius:99px;padding:6px 14px;font-weight:700}
+.plist span.me{background:var(--acc);color:var(--acc-ink)}
+.plist span.ok{outline:2px solid #5dff9d}
+.err{color:#ffd0d0;background:rgba(255,60,60,.2);border-radius:12px;padding:8px 12px;font-size:15px;text-align:center;display:none;max-width:440px}
+.board{display:grid;gap:6px;width:min(440px,100%)}
+.board div{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;border-radius:14px;background:rgba(255,255,255,.1);font-weight:700}
+.board div.me{background:var(--acc);color:var(--acc-ink)}
+.timer{height:10px;width:min(440px,100%);border-radius:9px;background:rgba(255,255,255,.15);overflow:hidden}
+.timer i{display:block;height:100%;background:var(--acc);width:100%;transition:width .25s linear}
+.wait{opacity:.8;font-size:15px;text-align:center}
+@media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}

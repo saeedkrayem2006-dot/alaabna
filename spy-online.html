@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>الجاسوس أونلاين</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Reem+Kufi:wght@700&family=Lalezar&family=Cairo:wght@400;700;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="online.css">
+<style>
+/*
+VOICE: whispery spy night, each friend holding their own secret file.
+IDEA: a manila secret dossier on every phone, stamped red.
+PICTURE: the dossier card with the word (or "الجاسوس") fills each phone.
+COLOUR and TYPE: ink night #0f1420 into #2a3550, manila #e9d6a8, stamp red #d23a2a; Reem Kufi titles, Cairo text.
+LAYOUT: dossier card, then vote buttons or guess options below; lobby centred.
+*/
+:root{color-scheme:dark;--bg:#0f1420;--bg2:#2a3550;--acc:#e9d6a8;--acc-ink:#231a0e;--red:#d23a2a}
+h1,h2{font-family:'Reem Kufi',Cairo,sans-serif}
+.file{position:relative;width:min(420px,100%);background:linear-gradient(160deg,#e9d6a8,#d8bf86);color:#231a0e;border-radius:8px 8px 18px 18px;padding:28px 18px 22px;text-align:center;box-shadow:0 16px 30px rgba(0,0,0,.45)}
+.file::before{content:"";position:absolute;top:-14px;right:0;width:40%;height:16px;background:#d8bf86;border-radius:10px 10px 0 0}
+.stamp{position:absolute;top:10px;left:12px;transform:rotate(-12deg);border:3px solid var(--red);color:var(--red);font:700 15px 'Reem Kufi',Cairo;padding:0 8px;border-radius:6px}
+.file .w{font:700 clamp(34px,10vw,50px)/1.15 'Reem Kufi',Cairo;margin:6px 0}
+.file .w.spy{color:var(--red)}
+.file small{display:block;font-size:14px;opacity:.75}
+.vote{display:grid;gap:10px;width:min(420px,100%)}
+.vote button,.opts button{min-height:56px;border-radius:16px;border:2px solid var(--acc);background:none;color:#fff;font:900 18px Cairo}
+.vote button.sel,.opts button.sel{background:var(--acc);color:#231a0e}
+.opts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;width:min(420px,100%)}
+.tips{width:min(420px,100%);background:rgba(255,255,255,.08);border-radius:14px;padding:12px 16px;font-size:15px}
+.chat{width:min(420px,100%);background:rgba(0,0,0,.25);border:1px solid rgba(255,255,255,.14);border-radius:18px;padding:10px;display:none;flex-direction:column;gap:8px}
+.chat .log{height:220px;overflow-y:auto;display:flex;flex-direction:column;gap:6px;padding:2px;user-select:text;-webkit-user-select:text}
+.chat .empty{margin:auto;opacity:.6;font-size:14px;text-align:center}
+.msg{max-width:82%;align-self:flex-start;background:rgba(255,255,255,.12);border-radius:14px 14px 14px 4px;padding:6px 12px;line-height:1.4;overflow-wrap:anywhere}
+.msg b{display:block;font-size:12.5px;color:var(--acc)}
+.msg.me{align-self:flex-end;background:var(--acc);color:#231a0e;border-radius:14px 14px 4px 14px}
+.msg.me b{color:#6b4e1e}
+.chat form{display:flex;gap:8px}
+.chat input{text-align:start;font-size:16px;min-height:46px;padding:8px 12px}
+.chat form button{flex:none;min-width:64px;border:0;border-radius:14px;background:var(--acc);color:#231a0e;font:900 16px Cairo}
+.chat .lim{font-size:12.5px;opacity:.6;margin:0}
+</style>
+</head>
+<body>
+<a class="home" href="index.html">→ ألعابنا</a>
+
+<section id="lobby" class="screen on">
+  <h1>الجاسوس أونلاين</h1>
+  <p class="sub">كل واحد بيشوف كلمته على تلفونه. واحد منكم جاسوس ما بيعرف الكلمة. بدها ٣ لاعبين أو أكثر.</p>
+  <div class="card">
+    <input id="nm" maxlength="14" placeholder="اسمك" aria-label="اسمك">
+    <button class="big" id="create">أنشئ غرفة</button>
+    <div class="or">أو ادخل لغرفة صاحبك</div>
+    <input id="code" inputmode="numeric" maxlength="4" placeholder="كود الغرفة" aria-label="كود الغرفة">
+    <button class="ghost" id="joinB">ادخل</button>
+  </div>
+  <div class="err" id="err"></div>
+</section>
+
+<section id="wait" class="screen">
+  <p class="sub">كود الغرفة — خلّي الباقيين يدخلوه</p>
+  <div class="code" id="codeShow"></div>
+  <div class="plist" id="wplist"></div>
+  <button class="big" id="startB" style="max-width:440px">وزّع الملفات</button>
+  <p class="wait" id="wmsg"></p>
+</section>
+
+<section id="play" class="screen">
+  <div class="file" id="file"></div>
+  <h2 id="ph"></h2>
+  <div class="tips" id="tips"></div>
+  <div class="chat" id="chat">
+    <div class="log" id="log" aria-live="polite"></div>
+    <form id="chatF"><input id="chatIn" maxlength="100" placeholder="اكتب سؤالك أو جوابك…" aria-label="رسالة" autocomplete="off"><button>ابعت</button></form>
+  </div>
+  <div class="vote" id="vote"></div>
+  <div class="opts" id="opts"></div>
+  <div class="plist" id="done"></div>
+  <button class="big" id="hostB" style="max-width:420px;display:none"></button>
+</section>
+
+<script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+<script src="net.js"></script>
+<script>
+{
+const $=s=>document.querySelector(s);
+const SETS={
+ 'أماكن':['البحر','المدرسة','المستشفى','المطار','العرس','الجامع','السوبرماركت','الملعب','المطعم','الحلاق','الجبل','السينما','المخبز','البنك','حديقة الحيوانات','الكراج'],
+ 'أكلات':['شاورما','فلافل','منسف','مقلوبة','بيتزا','كنافة','حمص','مسخّن','ملوخية','برغر','سوشي','قطايف','ورق دوالي','تبولة','شكشوكة','مجدّرة'],
+ 'حيوانات':['أسد','جمل','قطة','فيل','زرافة','دجاجة','حصان','قرد','دب','سمكة','نحلة','بقرة','نسر','أرنب','تمساح','بطريق'],
+ 'أشياء بالبيت':['تلاجة','كنباية','مخدّة','غسالة','تلفزيون','مكنسة','مراية','فرن','سجادة','ستارة','مروحة','خزانة','فنجان','ساعة','ابريق','دوش']};
+const CATS=Object.keys(SETS);
+const show=id=>document.querySelectorAll('.screen').forEach(s=>s.classList.toggle('on',s.id===id));
+const shuffle=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a};
+let st=null,lastN=-1,myVote=null,myGuess=null,sc={},myMsgs=[],seenMsg=0;
+const cleanMsg=s=>String(s==null?'':s).replace(/[<>&"]/g,'').replace(/\s+/g,' ').trim().slice(0,100);
+function allMsgs(){
+  if(!st)return [];
+  const out=[];
+  players().forEach(p=>{const ch=p.ch;if(Array.isArray(ch))ch.forEach(m=>{if(m&&m.n===st.n&&typeof m.t==='number')out.push({peer:p.peer,me:p.me,nm:p.nm,t:m.t,m:cleanMsg(m.m)})})});
+  return out.filter(m=>m.m).sort((a,b)=>a.t-b.t);
+}
+function renderChat(show){
+  const box=$('#chat');box.style.display=show?'flex':'none';if(!show)return;
+  const ms=allMsgs(),log=$('#log');
+  const atBottom=log.scrollHeight-log.scrollTop-log.clientHeight<40;
+  log.innerHTML=ms.length?ms.map(m=>`<div class="msg ${m.me?'me':''}"><b>${m.me?'إنت':m.nm}</b>${m.m}</div>`).join(''):'<p class="empty">ما في رسائل لسا. اسأل سؤال عن الكلمة بدون ما تقولها!</p>';
+  if(atBottom||ms.length&&ms[ms.length-1].me)log.scrollTop=log.scrollHeight;
+  const others=ms.filter(m=>!m.me).length;
+  if(others>seenMsg)try{navigator.vibrate&&navigator.vibrate(30)}catch(e){}
+  seenMsg=others;
+}
+
+const lob=Net.lobby('spy',{joined:h=>{show('wait');$('#startB').style.display=h?'block':'none';$('#wmsg').textContent=h?'لما يصيروا ٣ أو أكثر اكبس «وزّع الملفات».':'استنى صاحب الغرفة يوزّع…';render()}});
+const players=()=>Net.list();
+function setSt(s){st=s;Net.set({st:s});render()}
+function nameOf(peer){const p=players().find(x=>x.peer===peer);return p?p.nm:'لاعب طلع'}
+
+/* host */
+function deal(){
+  const ps=players();if(ps.length<3)return;
+  const cat=CATS[Math.floor(Math.random()*CATS.length)],list=SETS[cat];
+  const w=Math.floor(Math.random()*list.length);
+  const spy=ps[Math.floor(Math.random()*ps.length)].peer;
+  const opts=shuffle([w,...shuffle(list.map((_,i)=>i).filter(i=>i!==w)).slice(0,5)]);
+  ps.forEach(p=>{if(sc[p.peer]==null)sc[p.peer]=0});
+  setSt({ph:'talk',n:(st?st.n:0)+1,cat,w,spy,opts,sc:{...sc},starter:ps[Math.floor(Math.random()*ps.length)].peer});
+}
+function hostStep(){
+  if(!st)return;const ps=players();
+  if(st.ph==='vote'){
+    if(ps.every(p=>p.a&&p.a.n===st.n&&p.a.v)){
+      const tally={};ps.forEach(p=>tally[p.a.v]=(tally[p.a.v]||0)+1);
+      const best=Math.max(...Object.values(tally)),top=Object.keys(tally).filter(k=>tally[k]===best);
+      const caught=top.length===1&&top[0]===st.spy;
+      if(caught)setSt({...st,ph:'guess',tally});
+      else finish(false,top.length>1?'تعادل بالتصويت — الجاسوس هرب!':`صوّتوا على ${nameOf(top[0])} — غلط!`,tally);
+    }
+  }
+  if(st.ph==='guess'){
+    const s=ps.find(p=>p.peer===st.spy);
+    if(!s){finish(true,'الجاسوس طلع من الغرفة!',st.tally);return}
+    if(s.a&&s.a.n===st.n&&s.a.g!=null){
+      const ok=s.a.g===st.w;
+      finish(!ok,ok?'انمسك بس حزر الكلمة وهرب!':`انمسك واختار «${SETS[st.cat][s.a.g]}» — غلط!`,st.tally);
+    }
+  }
+}
+function finish(caught,msg,tally){
+  if(caught)players().forEach(p=>{if(p.peer!==st.spy)sc[p.peer]=(sc[p.peer]||0)+1});else sc[st.spy]=(sc[st.spy]||0)+2;
+  setSt({...st,ph:'res',caught,msg,tally,sc:{...sc}});
+}
+
+/* everyone */
+function render(){
+  const ps=players(),h=Net.host(),meP=Net.me(),host=lob.isHost();
+  if(!host&&h&&h.st)st=h.st;
+  $('#wplist').innerHTML=ps.map(p=>`<span class="${p.me?'me':''}">${p.nm}${p.host?' (صاحب الغرفة)':''}</span>`).join('');
+  if(host)$('#startB').disabled=ps.length<3;
+  if(!lob.code())return;
+  if(!host&&!h){$('#wmsg').textContent='صاحب الغرفة مش موجود. استنى أو ادخل كود جديد.';show('wait');return}
+  if(!st){show('wait');return}
+  show('play');
+  if(st.n!==lastN){lastN=st.n;myVote=null;myGuess=null;myMsgs=[];seenMsg=0;Net.set({a:null,ch:[]})}
+  const amSpy=meP&&meP.peer===st.spy,word=SETS[st.cat][st.w];
+  const hb=$('#hostB');hb.style.display='none';
+  $('#vote').innerHTML='';$('#opts').innerHTML='';$('#done').innerHTML='';$('#tips').style.display='none';
+  renderChat(st.ph==='talk'||st.ph==='vote');
+  if(st.ph==='res'){
+    $('#file').innerHTML=`<span class="stamp">${st.caught?'انمسك':'هرب'}</span><small>الجاسوس كان</small><div class="w spy">${nameOf(st.spy)}</div><small>والكلمة: <b>${word}</b></small>`;
+    $('#ph').textContent=st.caught?'ربحوا المحققين!':'ربح الجاسوس!';
+    $('#tips').style.display='block';
+    $('#tips').innerHTML=st.msg+'<br>'+Object.entries(st.sc).sort((a,b)=>b[1]-a[1]).map(([p,s])=>`${nameOf(p)}: ${s}`).join(' · ');
+    if(host){hb.style.display='block';hb.textContent='جولة جديدة';hb.onclick=deal}
+    return;
+  }
+  $('#file').innerHTML=amSpy
+    ?`<span class="stamp">سرّي</span><small>إنت…</small><div class="w spy">الجاسوس!</div><small>ما بتعرف الكلمة. الموضوع: ${st.cat}</small>`
+    :`<span class="stamp">سرّي</span><small>الكلمة السرّية</small><div class="w">${word}</div><small>الموضوع: ${st.cat} · واحد منكم ما بيعرفها</small>`;
+  if(st.ph==='talk'){
+    $('#ph').textContent='وقت التحقيق';
+    $('#tips').style.display='block';
+    $('#tips').innerHTML=`<b>${nameOf(st.starter)}</b> بيبلش. اكتبوا بالشات: كل واحد بيسأل اللي بعده سؤال عن الكلمة بدون ما يقولها، واللي انسأل بيجاوب. بعد جولتين أو ثلاث، صاحب الغرفة بيفتح التصويت.`;
+    if(host){hb.style.display='block';hb.textContent='يلا نصوّت';hb.onclick=()=>setSt({...st,ph:'vote'})}
+  }
+  if(st.ph==='vote'){
+    $('#ph').textContent=myVote?'استنى الباقيين يصوّتوا…':'مين الجاسوس؟';
+    $('#vote').innerHTML=ps.filter(p=>!p.me).map(p=>`<button data-v="${p.peer}" class="${myVote===p.peer?'sel':''}">${p.nm}</button>`).join('');
+    $('#done').innerHTML=ps.map(p=>`<span class="${p.a&&p.a.n===st.n&&p.a.v?'ok':''}">${p.nm}</span>`).join('');
+  }
+  if(st.ph==='guess'){
+    $('#ph').textContent=amSpy?'انمسكت! احزر الكلمة وبتربح':`مسكتوا ${nameOf(st.spy)}! هلّق بيحاول يحزر الكلمة…`;
+    if(amSpy)$('#opts').innerHTML=st.opts.map(i=>`<button data-g="${i}" class="${myGuess===i?'sel':''}">${SETS[st.cat][i]}</button>`).join('');
+  }
+}
+$('#vote').addEventListener('click',e=>{const b=e.target.closest('button');if(!b||!st||st.ph!=='vote')return;myVote=b.dataset.v;Net.set({a:{n:st.n,v:myVote}});render();if(lob.isHost())setTimeout(hostStep,50)});
+$('#opts').addEventListener('click',e=>{const b=e.target.closest('button');if(!b||!st||st.ph!=='guess'||myGuess!=null)return;myGuess=+b.dataset.g;Net.set({a:{n:st.n,g:myGuess}});render();if(lob.isHost())setTimeout(hostStep,50)});
+$('#startB').addEventListener('click',deal);
+$('#chatF').addEventListener('submit',e=>{
+  e.preventDefault();const m=cleanMsg($('#chatIn').value);if(!m||!st)return;
+  myMsgs=[...myMsgs,{n:st.n,t:Date.now(),m}].slice(-6);
+  Net.set({ch:myMsgs});$('#chatIn').value='';render();
+});
+Net.onChange(()=>{if(lob.isHost())hostStep();render()});
+}
+</script>
+</body>
+</html>

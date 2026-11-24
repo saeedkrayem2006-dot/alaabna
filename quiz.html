@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>تحدي المعلومات</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Lalezar&family=Cairo:wght@400;700;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="online.css">
+<style>
+/*
+VOICE: buzzy quiz-night in the living room, everyone racing on their own phone.
+IDEA: a TV quiz board — four big coloured answer tiles, a shrinking time bar.
+PICTURE: the question card and the four answer tiles fill each phone.
+COLOUR and TYPE: sunset orange #ff7a2f into deep red-violet #3b0f3f, tiles red/blue/yellow/green; Lalezar shouts, Cairo text.
+LAYOUT: question card on top, 2×2 answer grid, time bar; lobby and board centred.
+*/
+:root{color-scheme:dark;--bg:#3b0f3f;--bg2:#ff7a2f;--acc:#ffd23f;--acc-ink:#3b0f3f}
+.q{width:min(480px,100%);background:#fff;color:#2b0b2e;border-radius:22px;padding:18px;text-align:center;font:900 clamp(20px,6vw,26px)/1.35 Cairo;box-shadow:0 8px 0 rgba(0,0,0,.25)}
+.q small{display:block;font:700 13px Cairo;opacity:.6;margin-bottom:4px}
+.opts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;width:min(480px,100%)}
+.opts button{min-height:92px;border:0;border-radius:18px;font:900 clamp(17px,5vw,21px)/1.25 Cairo;color:#fff;padding:8px;box-shadow:0 5px 0 rgba(0,0,0,.28);cursor:pointer}
+.opts button:nth-child(1){background:#e8384f}.opts button:nth-child(2){background:#2f6fe0}
+.opts button:nth-child(3){background:#e8a400}.opts button:nth-child(4){background:#1fa85a}
+.opts button.pick{outline:5px solid #fff;outline-offset:-5px}
+.opts.locked button:not(.pick){opacity:.45}
+.opts.rev button{opacity:.3}.opts.rev button.right{opacity:1;outline:5px solid #fff;outline-offset:-5px}
+.opts button:disabled{cursor:default}
+.res{font:400 30px Lalezar,Cairo;text-align:center;margin:0}
+</style>
+</head>
+<body>
+<a class="home" href="index.html">→ ألعابنا</a>
+
+<section id="lobby" class="screen on">
+  <h1>تحدي المعلومات</h1>
+  <p class="sub">كل واحد على تلفونه. ١٠ أسئلة، واللي بيجاوب صح وأسرع بياخد نقاط أكثر.</p>
+  <div class="card">
+    <input id="nm" maxlength="14" placeholder="اسمك" aria-label="اسمك">
+    <button class="big" id="create">أنشئ غرفة</button>
+    <div class="or">أو ادخل لغرفة صاحبك</div>
+    <input id="code" inputmode="numeric" maxlength="4" placeholder="كود الغرفة" aria-label="كود الغرفة">
+    <button class="ghost" id="joinB">ادخل</button>
+  </div>
+  <div class="err" id="err"></div>
+</section>
+
+<section id="wait" class="screen">
+  <p class="sub">كود الغرفة — خلّي الباقيين يدخلوه</p>
+  <div class="code" id="codeShow"></div>
+  <div class="plist" id="wplist"></div>
+  <button class="big" id="startB" style="max-width:440px">ابدأ التحدي</button>
+  <p class="wait" id="wmsg"></p>
+</section>
+
+<section id="play" class="screen">
+  <div class="timer"><i id="bar"></i></div>
+  <div class="q" id="q"></div>
+  <div class="opts" id="opts"></div>
+  <p class="res" id="res"></p>
+  <div class="plist" id="answered"></div>
+</section>
+
+<section id="end" class="screen">
+  <h1 id="champ"></h1>
+  <div class="board" id="board"></div>
+  <button class="big" id="againB" style="max-width:440px">تحدي جديد</button>
+  <p class="wait" id="emsg"></p>
+</section>
+
+<script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+<script src="net.js"></script>
+<script>
+{
+const $=s=>document.querySelector(s);
+const RAW=`ما هي عاصمة فرنسا؟|باريس|لندن|روما|مدريد
+كم عدد أيام الأسبوع؟|٧|٥|٦|٨
+ما هو أكبر كوكب في المجموعة الشمسية؟|المشتري|زحل|الأرض|المريخ
+كم رجل للعنكبوت؟|٨|٦|١٠|٤
+ما هي عاصمة اليابان؟|طوكيو|بكين|سيول|أوساكا
+ما هو أسرع حيوان على اليابسة؟|الفهد|الأسد|الحصان|الغزال
+كم لاعب لكل فريق كرة قدم داخل الملعب؟|١١|١٠|٩|١٢
+أي حيوان بيلقّبوه «سفينة الصحراء»؟|الجمل|الحصان|الفيل|الماعز
+ما هي أكبر قارة في العالم؟|آسيا|أفريقيا|أوروبا|أمريكا الشمالية
+ما هو أكبر محيط في العالم؟|المحيط الهادئ|المحيط الأطلسي|المحيط الهندي|المحيط المتجمد الشمالي
+كم لون في قوس قزح؟|٧|٥|٦|٩
+ما هي عاصمة مصر؟|القاهرة|الإسكندرية|الأقصر|أسوان
+كم عدد سور القرآن الكريم؟|١١٤|١١٠|١٢٠|١٠٠
+شو الغاز اللي بنتنفسه عشان نعيش؟|الأكسجين|ثاني أكسيد الكربون|الهيدروجين|النيتروجين
+ما هو أقرب نجم للأرض؟|الشمس|القمر|المريخ|نجم القطب
+كم ضلع للمثلث؟|٣|٤|٥|٦
+مين رسم لوحة الموناليزا؟|ليوناردو دافنشي|بيكاسو|فان غوخ|مايكل أنجلو
+بأي بلد موجودة أهرامات الجيزة؟|مصر|السودان|المكسيك|العراق
+ما هو أطول حيوان في العالم؟|الزرافة|الفيل|الجمل|النعامة
+ما هي عاصمة إيطاليا؟|روما|ميلانو|البندقية|نابولي
+أي كوكب بيسمّوه «الكوكب الأحمر»؟|المريخ|الزهرة|عطارد|زحل
+ما هو أكبر حيوان على الأرض؟|الحوت الأزرق|الفيل الأفريقي|القرش الأبيض|الزرافة
+كم حرف في اللغة العربية؟|٢٨|٢٦|٢٩|٣٠
+أي عضو بيضخ الدم بالجسم؟|القلب|الرئة|الكبد|الكلية
+شو عملة اليابان؟|الين|اليوان|الوون|الروبية
+كم يوم في السنة الكبيسة؟|٣٦٦|٣٦٥|٣٦٤|٣٦٠
+ما هي عاصمة تركيا؟|أنقرة|إسطنبول|إزمير|أنطاليا
+أي حيوان بينام معلّق بالمقلوب؟|الخفاش|البومة|القرد|الكسلان
+ما هي أقسى مادة طبيعية؟|الألماس|الحديد|الذهب|الزجاج
+كم قلب للأخطبوط؟|٣|١|٢|٨
+ما هي أصغر قارة؟|أستراليا|أوروبا|أنتاركتيكا|أمريكا الجنوبية
+على كم درجة مئوية بيغلي الماء عند سطح البحر؟|١٠٠|٥٠|٨٠|١٢٠
+ما هي عاصمة السعودية؟|الرياض|جدة|مكة|الدمام
+كم سن عند الإنسان البالغ عادةً؟|٣٢|٢٨|٣٠|٣٦
+مين ربح كأس العالم ٢٠٢٢؟|الأرجنتين|فرنسا|البرازيل|المغرب
+ما هي عاصمة الأردن؟|عمّان|إربد|الزرقاء|العقبة
+أي مدينة مشهورة بالكنافة النابلسية؟|نابلس|الخليل|جنين|يافا
+كم ساعة في اليوم؟|٢٤|١٢|٢٠|٣٦
+كم دقيقة في الساعة؟|٦٠|١٠٠|٥٠|٣٠
+ما هو أكبر بلد في العالم بالمساحة؟|روسيا|كندا|الصين|أمريكا
+من أي شجرة بيطلع الزيت اللي بنستعمله بالزعتر والزيت؟|الزيتون|النخيل|اللوز|الصنوبر
+كم لاعب بفريق كرة السلة داخل الملعب؟|٥|٦|٧|١١`;
+const BANK=RAW.trim().split('\n').map(l=>{const [q,...o]=l.split('|');return {q,o}});
+const N=10,DUR=15;
+const show=id=>document.querySelectorAll('.screen').forEach(s=>s.classList.toggle('on',s.id===id));
+const shuffle=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a};
+const order=qi=>{const r=qi%4;return [0,1,2,3].map(k=>(k+r)%4)}; /* display order; option 0 is the right one */
+
+let st=null,myAns=null,lastN=-1,qStart=0,barT=null;
+/* host-only */
+let H={deck:[],seen:[],timer:null,next:null};
+
+const lob=Net.lobby('quiz',{joined:h=>{show('wait');$('#startB').style.display=h?'block':'none';$('#wmsg').textContent=h?'لما يدخلوا الكل اكبس «ابدأ».':'استنى صاحب الغرفة يبلّش…';render()}});
+
+function players(){return Net.list()}
+function setSt(s){st=s;Net.set({st:s});render()}
+
+/* ---------- host ---------- */
+function hostStart(){
+  H.deck=shuffle(BANK.map((_,i)=>i)).slice(0,N);
+  const sc={};players().forEach(p=>sc[p.peer]=0);
+  askQ(1,sc);
+}
+function askQ(n,sc){
+  clearTimeout(H.timer);clearTimeout(H.next);
+  H.seen=[];
+  setSt({ph:'q',n,q:H.deck[n-1],sc,got:[]});
+  H.timer=setTimeout(reveal,DUR*1000+600);
+}
+function gather(){
+  const ps=players();
+  ps.forEach(p=>{if(p.a&&p.a.n===st.n&&!H.seen.some(s=>s.peer===p.peer))H.seen.push({peer:p.peer,c:p.a.c})});
+  return ps;
+}
+function hostStep(){
+  if(!st||st.ph!=='q')return;
+  const ps=gather();
+  if(ps.length&&ps.every(p=>H.seen.some(s=>s.peer===p.peer)))reveal();
+}
+function reveal(){
+  if(!st||st.ph!=='q')return;
+  clearTimeout(H.timer);gather();
+  const sc={...st.sc},bonus=[50,30,15];
+  const got=H.seen.filter(s=>s.c===0).map(s=>s.peer);
+  got.forEach((p,i)=>sc[p]=(sc[p]||0)+100+(bonus[i]||0));
+  setSt({...st,ph:'rev',sc,got});
+  H.next=setTimeout(()=>{st.n>=N?setSt({...st,ph:'end'}):askQ(st.n+1,sc)},4200);
+}
+
+/* ---------- everyone ---------- */
+function nameOf(peer){const p=players().find(x=>x.peer===peer);return p?p.nm:'لاعب طلع'}
+function render(){
+  const ps=players(),h=Net.host();
+  if(!lob.isHost()&&h&&h.st)st=h.st;
+  $('#wplist').innerHTML=ps.map(p=>`<span class="${p.me?'me':''}">${p.nm}${p.host?' (صاحب الغرفة)':''}</span>`).join('');
+  if(lob.isHost())$('#startB').disabled=ps.length<2;
+  if(!lob.code())return;
+  if(!lob.isHost()&&!h){$('#wmsg').textContent='صاحب الغرفة مش موجود. استنى أو ارجع وادخل كود جديد.';if(st&&st.ph!=='end')show('wait');return}
+  if(!st||st.ph==='lobby'){show('wait');return}
+  if(st.ph==='q'||st.ph==='rev'){
+    show('play');
+    const it=BANK[st.q];
+    if(st.n!==lastN){lastN=st.n;myAns=null;qStart=Date.now();Net.set({a:null});tickBar()}
+    $('#q').innerHTML=`<small>سؤال ${st.n} من ${N}</small>${it.q}`;
+    const box=$('#opts');
+    box.className='opts'+(st.ph==='rev'?' rev':myAns!=null?' locked':'');
+    box.innerHTML=order(st.q).map(k=>`<button data-k="${k}" class="${myAns===k?'pick':''} ${st.ph==='rev'&&k===0?'right':''}" ${myAns!=null||st.ph==='rev'?'disabled':''}>${it.o[k]}</button>`).join('');
+    if(st.ph==='rev'){
+      clearTimeout(barT);$('#bar').style.width='0%';
+      const meP=Net.me(),mine=meP?st.got.indexOf(meP.peer):-1;
+      $('#res').textContent=mine>-1?(mine===0?'صح، وإنت الأسرع!':'صح!'):myAns==null?'خلص الوقت':'غلط';
+      $('#res').style.color=mine>-1?'#5dff9d':'#ffd0d0';
+      $('#answered').innerHTML=st.got.length?st.got.map((p,i)=>`<span class="ok">${i+1}. ${nameOf(p)}</span>`).join(''):'<span>ما حدا جاوب صح</span>';
+    }else{
+      $('#res').textContent=myAns!=null?'استنى الباقيين…':'';$('#res').style.color='#fff';
+      const ans=ps.filter(p=>p.a&&p.a.n===st.n);
+      $('#answered').innerHTML=ps.map(p=>`<span class="${ans.includes(p)?'ok':''}">${p.nm}</span>`).join('');
+    }
+  }
+  if(st.ph==='end'){
+    show('end');
+    const rows=Object.entries(st.sc).sort((a,b)=>b[1]-a[1]);
+    $('#champ').textContent=rows.length?'البطل: '+nameOf(rows[0][0]):'خلص!';
+    const meP=Net.me();
+    $('#board').innerHTML=rows.map(([p,s],i)=>`<div class="${meP&&meP.peer===p?'me':''}"><span>${i+1}. ${nameOf(p)}</span><span>${s}</span></div>`).join('');
+    $('#againB').style.display=lob.isHost()?'block':'none';
+    $('#emsg').textContent=lob.isHost()?'':'صاحب الغرفة بيقدر يبلّش تحدي جديد.';
+  }
+}
+function tickBar(){
+  clearTimeout(barT);
+  const f=()=>{const left=Math.max(0,1-(Date.now()-qStart)/(DUR*1000));$('#bar').style.width=(left*100)+'%';if(left>0&&st&&st.ph==='q')barT=setTimeout(f,250)};f();
+}
+$('#opts').addEventListener('click',e=>{
+  const b=e.target.closest('button');if(!b||myAns!=null||!st||st.ph!=='q')return;
+  if(Date.now()-qStart>DUR*1000)return;
+  myAns=+b.dataset.k;Net.set({a:{n:st.n,c:myAns}});render();
+  if(lob.isHost())setTimeout(hostStep,50);
+});
+$('#startB').addEventListener('click',hostStart);
+$('#againB').addEventListener('click',hostStart);
+Net.onChange(()=>{if(lob.isHost())hostStep();render()});
+}
+</script>
+</body>
+</html>

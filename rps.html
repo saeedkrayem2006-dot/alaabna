@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>حجر ورقة مقص</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Lalezar&family=Cairo:wght@400;700;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="online.css">
+<style>
+/*
+VOICE: quick, cheeky schoolyard showdown, everyone on their own phone.
+IDEA: the schoolyard hand game — three huge hand buttons, a "١، ٢، ٣!" reveal.
+PICTURE: three giant hand tiles on each phone, then everyone's hands side by side.
+COLOUR and TYPE: mint #19c7a0 into deep teal #06363a, coral accent #ff6b57; Lalezar shouts, Cairo text.
+LAYOUT: score strip, the three hand buttons stacked big, reveal grid; lobby centred.
+*/
+:root{color-scheme:dark;--bg:#06363a;--bg2:#19c7a0;--acc:#ff6b57;--acc-ink:#fff}
+.hands{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;width:min(480px,100%)}
+.hands button{aspect-ratio:1/1.15;border:0;border-radius:22px;background:#fff;color:#06363a;font:900 16px Cairo;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;box-shadow:0 6px 0 rgba(0,0,0,.25);cursor:pointer}
+.hands button span{font-size:clamp(46px,15vw,72px);line-height:1}
+.hands button.pick{background:var(--acc);color:#fff;transform:translateY(-6px)}
+.hands.locked button:not(.pick){opacity:.4}
+.big-t{font:400 clamp(60px,20vw,96px)/1 Lalezar,Cairo;color:#fff}
+.reveal{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;width:min(480px,100%)}
+.reveal div{background:rgba(255,255,255,.12);border-radius:18px;padding:10px;text-align:center;font-weight:900}
+.reveal div span{display:block;font-size:56px;line-height:1.1}
+.reveal div b{display:block;font:400 22px Lalezar,Cairo;color:#5dff9d}
+.reveal div.me{outline:3px solid var(--acc)}
+.strip{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;width:min(480px,100%)}
+.strip span{background:rgba(255,255,255,.12);border-radius:99px;padding:4px 12px;font-weight:700;font-size:14px}
+.strip span.me{background:var(--acc)}
+</style>
+</head>
+<body>
+<a class="home" href="index.html">→ ألعابنا</a>
+
+<section id="lobby" class="screen on">
+  <h1>حجر ورقة مقص</h1>
+  <p class="sub">كل واحد على تلفونه، وبتختاروا بنفس الوقت. بتاخد نقطة على كل واحد بتغلبه، وأول واحد بيوصل ٧ نقاط بيربح.</p>
+  <div class="card">
+    <input id="nm" maxlength="14" placeholder="اسمك" aria-label="اسمك">
+    <button class="big" id="create">أنشئ غرفة</button>
+    <div class="or">أو ادخل لغرفة صاحبك</div>
+    <input id="code" inputmode="numeric" maxlength="4" placeholder="كود الغرفة" aria-label="كود الغرفة">
+    <button class="ghost" id="joinB">ادخل</button>
+  </div>
+  <div class="err" id="err"></div>
+</section>
+
+<section id="wait" class="screen">
+  <p class="sub">كود الغرفة — خلّي الباقيين يدخلوه</p>
+  <div class="code" id="codeShow"></div>
+  <div class="plist" id="wplist"></div>
+  <button class="big" id="startB" style="max-width:440px">يلا نلعب</button>
+  <p class="wait" id="wmsg"></p>
+</section>
+
+<section id="play" class="screen">
+  <div class="strip" id="strip"></div>
+  <div class="big-t" id="cnt"></div>
+  <h2 id="ptitle">اختار!</h2>
+  <div class="hands" id="hands">
+    <button data-c="0"><span>✊</span>حجر</button>
+    <button data-c="1"><span>✋</span>ورقة</button>
+    <button data-c="2"><span>✌️</span>مقص</button>
+  </div>
+  <div class="reveal" id="reveal"></div>
+  <div class="plist" id="picked"></div>
+</section>
+
+<section id="end" class="screen">
+  <h1 id="champ"></h1>
+  <div class="board" id="board"></div>
+  <button class="big" id="againB" style="max-width:440px">لعبة جديدة</button>
+  <p class="wait" id="emsg"></p>
+</section>
+
+<script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+<script src="net.js"></script>
+<script>
+{
+const $=s=>document.querySelector(s);
+const HAND=['✊','✋','✌️'],HN=['حجر','ورقة','مقص'],TARGET=7,PICK=10;
+const beats=(a,b)=>(a===0&&b===2)||(a===1&&b===0)||(a===2&&b===1);
+const show=id=>document.querySelectorAll('.screen').forEach(s=>s.classList.toggle('on',s.id===id));
+let st=null,mine=null,lastN=-1,start=0,cT=null;
+let H={timer:null,next:null};
+
+const lob=Net.lobby('rps',{joined:h=>{show('wait');$('#startB').style.display=h?'block':'none';$('#wmsg').textContent=h?'لما يدخلوا الكل اكبس «يلا نلعب».':'استنى صاحب الغرفة يبلّش…';render()}});
+const players=()=>Net.list();
+function setSt(s){st=s;Net.set({st:s});render()}
+
+function hostStart(){const sc={};players().forEach(p=>sc[p.peer]=0);round(1,sc)}
+function round(n,sc){clearTimeout(H.timer);clearTimeout(H.next);setSt({ph:'pick',n,sc,ch:{},gain:{}});H.timer=setTimeout(reveal,PICK*1000+500)}
+function hostStep(){
+  if(!st||st.ph!=='pick')return;
+  const ps=players();
+  if(ps.length>1&&ps.every(p=>p.a&&p.a.n===st.n))reveal();
+}
+function reveal(){
+  if(!st||st.ph!=='pick')return;clearTimeout(H.timer);
+  const ps=players(),ch={};
+  ps.forEach(p=>{if(p.a&&p.a.n===st.n&&[0,1,2].includes(p.a.c))ch[p.peer]=p.a.c});
+  const sc={...st.sc},gain={};
+  Object.keys(ch).forEach(p=>{gain[p]=Object.keys(ch).filter(q=>q!==p&&beats(ch[p],ch[q])).length;sc[p]=(sc[p]||0)+gain[p]});
+  const top=Math.max(0,...Object.values(sc));
+  setSt({...st,ph:'rev',ch,gain,sc});
+  H.next=setTimeout(()=>{top>=TARGET?setSt({...st,ph:'end'}):round(st.n+1,sc)},3800);
+}
+
+function nameOf(peer){const p=players().find(x=>x.peer===peer);return p?p.nm:'لاعب طلع'}
+function render(){
+  const ps=players(),h=Net.host(),meP=Net.me();
+  if(!lob.isHost()&&h&&h.st)st=h.st;
+  $('#wplist').innerHTML=ps.map(p=>`<span class="${p.me?'me':''}">${p.nm}${p.host?' (صاحب الغرفة)':''}</span>`).join('');
+  if(lob.isHost())$('#startB').disabled=ps.length<2;
+  if(!lob.code())return;
+  if(!lob.isHost()&&!h){$('#wmsg').textContent='صاحب الغرفة مش موجود. استنى أو ادخل كود جديد.';show('wait');return}
+  if(!st){show('wait');return}
+  const strip=()=>{$('#strip').innerHTML=Object.entries(st.sc).sort((a,b)=>b[1]-a[1]).map(([p,s])=>`<span class="${meP&&meP.peer===p?'me':''}">${nameOf(p)} ${s}</span>`).join('')};
+  if(st.ph==='pick'){
+    show('play');strip();
+    if(st.n!==lastN){lastN=st.n;mine=null;start=Date.now();Net.set({a:null});tick()}
+    $('#ptitle').textContent=mine==null?'اختار!':'اخترت '+HN[mine]+'… استنى الباقيين';
+    $('#hands').style.display='grid';$('#reveal').innerHTML='';
+    $('#hands').className='hands'+(mine!=null?' locked':'');
+    $('#hands').querySelectorAll('button').forEach(b=>b.classList.toggle('pick',+b.dataset.c===mine));
+    $('#picked').innerHTML=ps.map(p=>`<span class="${p.a&&p.a.n===st.n?'ok':''}">${p.nm}</span>`).join('');
+  }
+  if(st.ph==='rev'){
+    show('play');strip();clearTimeout(cT);$('#cnt').textContent='';
+    $('#hands').style.display='none';$('#picked').innerHTML='';
+    const g=meP?st.gain[meP.peer]:undefined;
+    $('#ptitle').textContent=g==null?'ما اخترت بالوقت!':g>0?`غلبت ${g}! +${g}`:'ولا نقطة هالمرّة';
+    $('#reveal').innerHTML=ps.map(p=>{const c=st.ch[p.peer];return `<div class="${p.me?'me':''}"><span>${c==null?'—':HAND[c]}</span>${p.nm}<b>${st.gain[p.peer]?'+'+st.gain[p.peer]:''}</b></div>`}).join('');
+  }
+  if(st.ph==='end'){
+    show('end');
+    const rows=Object.entries(st.sc).sort((a,b)=>b[1]-a[1]);
+    $('#champ').textContent='البطل: '+(rows.length?nameOf(rows[0][0]):'');
+    $('#board').innerHTML=rows.map(([p,s],i)=>`<div class="${meP&&meP.peer===p?'me':''}"><span>${i+1}. ${nameOf(p)}</span><span>${s}</span></div>`).join('');
+    $('#againB').style.display=lob.isHost()?'block':'none';
+    $('#emsg').textContent=lob.isHost()?'':'صاحب الغرفة بيقدر يبلّش لعبة جديدة.';
+  }
+}
+function tick(){clearTimeout(cT);const f=()=>{const l=Math.max(0,Math.ceil(PICK-(Date.now()-start)/1000));$('#cnt').textContent=l;if(l>0&&st&&st.ph==='pick')cT=setTimeout(f,250)};f()}
+$('#hands').addEventListener('click',e=>{
+  const b=e.target.closest('button');if(!b||mine!=null||!st||st.ph!=='pick')return;
+  mine=+b.dataset.c;Net.set({a:{n:st.n,c:mine}});render();
+  if(lob.isHost())setTimeout(hostStep,50);
+});
+$('#startB').addEventListener('click',hostStart);
+$('#againB').addEventListener('click',hostStart);
+Net.onChange(()=>{if(lob.isHost())hostStep();render()});
+}
+</script>
+</body>
+</html>

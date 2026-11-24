@@ -93,14 +93,17 @@ body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 Cairo,system-
     </g></g>
   </svg>
   <h1 class="word">ألعابنا</h1>
-  <p class="tag">٧ ألعاب للشلّة على تلفون واحد · مجاناً وبدون تنزيل</p>
+  <p class="tag">١٢ لعبة للشلّة · على تلفون واحد أو كل واحد على تلفونه · مجاناً</p>
 </header>
 
 <main class="wrap">
   <div class="shelf"><h2>على تلفون واحد</h2><p>حطّوا التلفون بالنص وابدأوا</p></div>
   <div class="grid" id="one"></div>
 
-  <p class="note">ألعاب للشلّة على تلفون واحد: حطّوا التلفون بالنص وابدأوا. ما بدها تسجيل ولا تنزيل.</p>
+  <div class="shelf"><h2>كل واحد على تلفونه</h2><p>واحد بيعمل غرفة، والباقيين بيدخلوا بالكود</p></div>
+  <div class="grid" id="multi"></div>
+
+  <p class="note"><b>للألعاب اللي كل واحد على تلفونه:</b> كل واحد بيفتح الموقع على تلفونه، واحد بيكبس «أنشئ غرفة» وبيعطي الكود للباقيين. لازم الكل يكون متصل بالإنترنت.</p>
 </main>
 
 <script>
@@ -136,6 +139,7 @@ const MULTI=[
 const file={spyon:'spy-online',drawon:'draw-online'};
 const card=([k,t,d,p,c])=>`<a class="g" href="${file[k]||k}.html" style="--c:${c}"><div class="art"><svg viewBox="0 0 120 100" aria-hidden="true">${I[k]}</svg></div><div class="tx"><b>${t}</b><span>${d}</span><i>${p}</i></div></a>`;
 document.getElementById('one').innerHTML=ONE.map(card).join('');
+document.getElementById('multi').innerHTML=MULTI.map(card).join('');
 
 }
 </script>
