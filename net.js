@@ -2,6 +2,7 @@
    The host's phone opens a peer named after the room code; the others connect to it.
    Every phone keeps one presence object {nm, host, st, a, ...}; the host relays everyone's
    presence to everyone, so the games work exactly like inside Claude. */
+(function(){ if (document.querySelector('script[src="social.js"]')) return; const s=document.createElement('script'); s.type='module'; s.src='social.js'; document.head.appendChild(s); })();
 window.Net = (() => {
   let peer = null, myId = null, hostConn = null, conns = [], isHostMe = false;
   let pres = {}, mine = {}, cb = () => {}, pending = false;
@@ -104,7 +105,36 @@ window.Net = (() => {
       err(''); isH = h; cur = c;
       $('#codeShow').textContent = c;
       opts.joined(h);
+      addInviteButton(c);
     }
+    function addInviteButton(c) {
+      const wait = document.getElementById('wait');
+      if (!wait) return;
+      let b = document.getElementById('invBtn');
+      if (!b) {
+        b = document.createElement('button'); b.id = 'invBtn'; b.className = 'soc-btn'; b.type = 'button';
+        b.textContent = '📨 ادعي أصحابك';
+        b.style.cssText = 'min-height:48px;width:min(440px,100%);border-radius:16px;border:2px dashed currentColor;background:rgba(255,255,255,.12);color:inherit;font:900 17px Cairo,sans-serif;cursor:pointer';
+        const plist = document.getElementById('wplist');
+        plist && plist.parentNode ? plist.parentNode.insertBefore(b, plist.nextSibling) : wait.appendChild(b);
+      }
+      b.onclick = () => { if (window.Social) window.Social.openInvitePicker(game, c); };
+    }
+    // name from the saved character, and ?join=CODE links from invites
+    const fromProfile = () => { const p = window.Social && window.Social.currentProfile(); if (p && p.name && !$('#nm').value) $('#nm').value = p.name; return p; };
+    const params = new URLSearchParams(location.search);
+    const joinCode = digits(params.get('join') || '');
+    if (joinCode.length === 4) $('#code').value = joinCode;
+    let autoTried = false;
+    const tryAuto = () => {
+      fromProfile();
+      if (autoTried || joinCode.length !== 4 || cur) return;
+      if (!$('#nm').value.trim()) return;
+      autoTried = true; go(false, joinCode);
+    };
+    window.addEventListener('social-ready', tryAuto);
+    if (window.Social) setTimeout(tryAuto, 300);
+    setTimeout(() => { if (!autoTried && joinCode.length === 4 && $('#nm').value.trim()) tryAuto(); }, 2500);
     $('#create').addEventListener('click', () => go(true, code()));
     $('#joinB').addEventListener('click', () => {
       const c = digits($('#code').value);

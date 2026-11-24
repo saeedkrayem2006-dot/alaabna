@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<title>شخصيتي — ألعابنا</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Lalezar&family=Cairo:wght@400;700;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="social.css">
+<style>
+/*
+VOICE: cheerful dress-up — build your own little guy.
+IDEA: a sticker-booth mirror: your character big in the middle, option chips like a sticker sheet below.
+PICTURE: the live character preview on a sunny round stage.
+COLOUR and TYPE: sun yellow #ffcf33 stage, plum ink, cream page; Lalezar headings, Cairo text.
+LAYOUT: top bar, stage with character + name, option rows, save; sign-in card when logged out.
+*/
+.stage{width:min(440px,100%);background:var(--sun);border-radius:28px;padding:18px 16px 14px;display:grid;justify-items:center;gap:8px;box-shadow:0 8px 0 #00000014;position:relative;overflow:hidden}
+.stage::before{content:"";position:absolute;width:260px;height:260px;border-radius:50%;background:#ffffff55;top:-70px;left:50%;transform:translateX(-50%)}
+.stage svg{position:relative;filter:drop-shadow(0 6px 0 #0000001a)}
+.stage input{position:relative;width:100%;text-align:center;font:400 28px Lalezar,Cairo;background:#fff;border:3px solid #2b1340;border-radius:16px;padding:4px 12px;color:#2b1340;min-height:52px}
+.opts{width:min(440px,100%);display:grid;gap:12px}
+.opt h3{margin:0 0 6px;font:900 15px Cairo}
+.chips{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px}
+.chips button{flex:none;min-width:48px;min-height:48px;border-radius:14px;border:3px solid transparent;background:var(--card);color:var(--ink);font:700 14px Cairo;padding:0 10px;box-shadow:0 3px 0 #0000000f}
+.chips button.sw{width:48px;padding:0}
+.chips button.sel{border-color:var(--ink)}
+.code{width:min(440px,100%);background:var(--card);border-radius:20px;padding:14px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.code b{font:400 30px Lalezar,Cairo;letter-spacing:.15em;direction:ltr}
+.code span{flex:1;min-width:160px;font-size:14px;color:var(--mute)}
+.signin{width:min(440px,100%);background:var(--card);border-radius:24px;padding:22px;display:grid;gap:12px;text-align:center}
+.g{display:flex;align-items:center;justify-content:center;gap:10px;background:#fff;color:#2b1340;border:2px solid #ddd}
+.msg{min-height:22px;margin:0;font-weight:700;text-align:center}
+</style>
+</head>
+<body>
+<header class="bar"><a class="back" href="index.html">→ ألعابنا</a><h1>شخصيتي</h1><a class="back" href="friends.html">أصحابي</a></header>
+
+<main class="page">
+  <section id="out" class="signin" hidden>
+    <div id="demo"></div>
+    <h2>اعمل شخصيتك</h2>
+    <p class="mute">سجّل دخول عشان تعمل شخصية، تضيف أصحاب، تحكي معهم وتعزمهم على الألعاب.</p>
+    <button class="btn g" id="gBtn"><svg width="20" height="20" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 38.2 44 33 44 24c0-1.3-.1-2.4-.4-3.5z"/></svg>دخول بحساب جوجل</button>
+    <button class="btn ghost" id="guestBtn">دخول كضيف (على هالتلفون بس)</button>
+    <p class="msg" id="err"></p>
+  </section>
+
+  <section id="in" style="display:none">
+    <div class="stage"><div id="prev"></div><input id="nm" maxlength="20" placeholder="اسمك" aria-label="اسمك"></div>
+    <div class="opts" id="opts"></div>
+    <button class="btn" id="save">احفظ شخصيتي</button>
+    <p class="msg" id="msg"></p>
+    <div class="code" id="codeBox" hidden><div style="display:grid"><small class="mute">كود الصداقة تبعك</small><b id="code"></b></div><span>اعطي هالكود لصاحبك عشان يضيفك</span><button class="btn small" id="copy">انسخ</button></div>
+    <button class="btn ghost" id="logout">تسجيل خروج</button>
+  </section>
+</main>
+
+<script type="module">
+import { onUser, loginGoogle, loginGuest, logout, saveProfile, avatarSVG, PARTS, DEFAULT_AV, currentUser } from './social.js';
+const $ = s => document.querySelector(s);
+let av = { ...DEFAULT_AV }, loaded = false;
+const ROWS = [['face', 'الوجه', 'text'], ['skin', 'لون البشرة', 'sw'], ['hair', 'الشعر', 'text'], ['hc', 'لون الشعر', 'sw'], ['shirt', 'لون البلوزة', 'sw'], ['acc', 'إكسسوار', 'text']];
+function draw() {
+  $('#prev').innerHTML = avatarSVG(av, 170);
+  $('#opts').innerHTML = ROWS.map(([k, t, type]) => `<div class="opt"><h3>${t}</h3><div class="chips">${PARTS[k].map((v, i) =>
+    type === 'sw' ? `<button class="sw ${av[k] === i ? 'sel' : ''}" data-k="${k}" data-i="${i}" style="background:${v}" aria-label="${t} ${i + 1}"></button>`
+                  : `<button class="${av[k] === i ? 'sel' : ''}" data-k="${k}" data-i="${i}">${v}</button>`).join('')}</div></div>`).join('');
+}
+$('#opts').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; av[b.dataset.k] = +b.dataset.i; draw(); });
+$('#demo').innerHTML = avatarSVG({ skin: 3, hair: 1, hc: 0, shirt: 0, acc: 0, face: 1 }, 120);
+onUser((u, p) => {
+  $('#out').hidden = !!u; $('#in').hidden = !u;
+  $('#in').style.display = u ? 'contents' : 'none';
+  if (!u) return;
+  if (p && !loaded) { loaded = true; av = { ...DEFAULT_AV, ...(p.av || {}) }; $('#nm').value = p.name || ''; }
+  if (!p && !loaded) { loaded = true; $('#nm').value = (u.displayName || localStorage.getItem('alaabnaName') || '').slice(0, 20); }
+  $('#codeBox').hidden = !(p && p.code); if (p && p.code) $('#code').textContent = p.code;
+  draw();
+});
+$('#gBtn').onclick = async () => { $('#err').textContent = ''; try { await loginGoogle(); } catch (e) { $('#err').textContent = 'ما زبط الدخول. جرّب كمان مرة.'; } };
+$('#guestBtn').onclick = async () => { $('#err').textContent = ''; try { await loginGuest(); } catch (e) { $('#err').textContent = 'ما زبط الدخول. جرّب كمان مرة.'; } };
+$('#save').onclick = async () => {
+  $('#msg').textContent = 'جاري الحفظ…';
+  try { await saveProfile($('#nm').value, av); $('#msg').textContent = 'انحفظت شخصيتك ✓'; }
+  catch (e) { $('#msg').textContent = e.message === 'name' ? 'اكتب اسمك أول' : 'ما زبط الحفظ، جرّب كمان'; }
+};
+$('#copy').onclick = () => { navigator.clipboard && navigator.clipboard.writeText($('#code').textContent).then(() => $('#copy').textContent = 'انتسخ ✓', () => {}); };
+$('#logout').onclick = () => { loaded = false; logout(); };
+</script>
+</body>
+</html>

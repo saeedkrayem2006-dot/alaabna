@@ -45,11 +45,16 @@ body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 Cairo,system-
 @keyframes bob{50%{transform:translateY(-5px)}}
 .logo .f{animation:bob 2.4s ease-in-out infinite;transform-box:fill-box;transform-origin:bottom}
 @media(prefers-reduced-motion:reduce){.logo .f{animation:none}.g{transition:none}}
+.acct{position:relative;z-index:2;display:flex;justify-content:space-between;align-items:center;gap:8px;margin:-8px 0 6px}
+.acct a{display:inline-flex;align-items:center;gap:6px;min-height:44px;padding:2px 12px 2px 6px;border-radius:99px;background:#ffffffaa;color:#2b1340;font:900 15px Cairo;text-decoration:none;position:relative}
+.acct a svg{width:34px;height:40px}
+.acct .badge{position:absolute;top:-6px;left:-6px;min-width:22px;height:22px;border-radius:11px;background:#ff3b5c;color:#fff;font:900 12px/22px Cairo;text-align:center;padding:0 6px}
 </style>
 </head>
 <body>
 
 <header class="hero">
+  <nav class="acct"><a href="me.html" id="meLink">👤 اعمل شخصيتك</a><a href="friends.html" id="frLink">أصحابي</a></nav>
   <svg class="logo" viewBox="0 0 440 200" role="img" aria-label="لوغو ألعابنا: أربع شباب مبسوطين">
     <defs>
       <g id="eyes"><ellipse cx="-11" cy="2" rx="5" ry="6.5" fill="#2b1340"/><ellipse cx="11" cy="2" rx="5" ry="6.5" fill="#2b1340"/><circle cx="-9" cy="-1" r="2" fill="#fff"/><circle cx="13" cy="-1" r="2" fill="#fff"/></g>
@@ -142,6 +147,18 @@ document.getElementById('one').innerHTML=ONE.map(card).join('');
 document.getElementById('multi').innerHTML=MULTI.map(card).join('');
 
 }
+</script>
+<script type="module">
+import { onUser, avatarSVG, watchRequests } from './social.js';
+let stop=null;
+onUser((u,p)=>{
+  const me=document.getElementById('meLink'),fr=document.getElementById('frLink');
+  if(p){me.innerHTML=avatarSVG(p.av,34)+p.name.replace(/[<>&"]/g,'');}
+  else me.textContent=u?'👤 كمّل شخصيتك':'👤 اعمل شخصيتك';
+  if(stop){stop();stop=null}
+  fr.innerHTML='أصحابي';
+  if(u&&p) stop=watchRequests(rs=>{fr.innerHTML='أصحابي'+(rs.length?`<span class="badge">${rs.length}</span>`:'')});
+});
 </script>
 </body>
 </html>
